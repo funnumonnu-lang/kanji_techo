@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>かんじ手帳</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #faf7f2;
+      font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #app {
+      max-width: 480px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: #faf7f2;
+      display: flex;
+      flex-direction: column;
+    }
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; min-height: 100dvh; }
+
+    /* ===== START SCREEN ===== */
+    #start-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      padding: 40px 24px;
+    }
+    .app-icon { font-size: 80px; line-height: 1; }
+    .app-title {
+      font-size: 38px; font-weight: 900;
+      color: #2d2016;
+      text-align: center;
+      letter-spacing: 0.06em;
+    }
+    .app-sub {
+      font-size: 14px; color: #8b7355;
+      text-align: center; line-height: 1.6;
+    }
+    .level-section {
+      width: 100%;
+    }
+    .level-label {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.12em; margin-bottom: 10px;
+      display: block;
+    }
+    .level-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .level-btn {
+      background: #fff;
+      border: 2px solid #e8ddd0;
+      border-radius: 14px;
+      padding: 14px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex; flex-direction: column; gap: 4px; align-items: center;
+      -webkit-appearance: none;
+    }
+    .level-btn:active { transform: scale(0.96); }
+    .level-btn.selected {
+      border-color: #c0561e;
+      background: #fff5f0;
+    }
+    .lv-kanji {
+      font-size: 22px; font-weight: 900;
+      color: #2d2016;
+    }
+    .lv-label {
+      font-size: 11px; color: #8b7355;
+      font-weight: 700;
+    }
+    .start-btn {
+      background: #c0561e;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      padding: 18px 0;
+      width: 100%;
+      font-size: 18px;
+      font-weight: 900;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .start-btn:not(:disabled):active { transform: scale(0.97); }
+
+    /* ===== QUIZ SCREEN ===== */
+    #quiz-screen { flex: 1; }
+
+    .quiz-header {
+      background: #2d2016;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 13px; font-weight: 700;
+      color: #d4b896;
+      letter-spacing: 0.08em;
+    }
+    .progress-wrap {
+      flex: 1;
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #e8874a;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 13px; font-weight: 700;
+      color: #d4b896;
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .quiz-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 16px;
+      gap: 14px;
+    }
+
+    /* 問題カード */
+    .question-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 2px 12px rgba(45,32,22,0.08);
+      text-align: center;
+    }
+    .question-hint {
+      font-size: 11px; font-weight: 700;
+      color: #c0561e;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+    .question-reading {
+      font-size: 32px; font-weight: 900;
+      color: #2d2016;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .question-meaning {
+      font-size: 14px; color: #8b7355;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* 手書きエリア */
+    .canvas-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .canvas-label {
+      font-size: 11px; font-weight: 700;
+      color: #b5a08a;
+      letter-spacing: 0.1em;
+    }
+    .canvas-wrap {
+      position: relative;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(45,32,22,0.08);
+      overflow: hidden;
+    }
+    #draw-canvas {
+      display: block;
+      width: 100%;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    /* 罫線（漢字練習帳風） */
+    .canvas-guide {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
+
+    .canvas-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .clear-btn {
+      flex: 1;
+      background: #f3ede6;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #8b7355;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      transition: background 0.15s;
+    }
+    .clear-btn:active { background: #e8ddd0; }
+    .submit-btn {
+      flex: 2;
+      background: #c0561e;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.06em;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:not(:disabled):active { opacity: 0.85; }
+
+    /* 判定オーバーレイ */
+    .result-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(45,32,22,0.55);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .result-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .result-card {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 28px 28px 0 0;
+      padding: 28px 24px 40px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .result-overlay.show .result-card {
+      transform: translateY(0);
+    }
+    .result-icon {
+      font-size: 56px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .result-label {
+      font-size: 22px; font-weight: 900;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .result-label.correct { color: #1a7a3e; }
+    .result-label.wrong { color: #c0561e; }
+    .result-detail {
+      font-size: 14px; color: #8b7355;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .result-answer {
+      font-size: 36px; font-weight: 900;
+      text-align: center;
+      color: #2d2016;
+      margin-bottom: 20px;
+    }
+    .next-btn {
+      width: 100%;
+      background: #2d2016;
+      border: none;
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 16px;
+      font-weight: 900;
+      color: #faf7f2;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    .next-btn:active { opacity: 0.85; }
+
+    /* ===== RESULT SCREEN ===== */
+    #result-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px 24px;
+    }
+    .final-icon { font-size: 80px; line-height: 1; }
+    .final-title {
+      font-size: 28px; font-weight: 900;
+      color: #2d2016;
+      text-align: center;
+    }
+    .score-card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 28px 40px;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(45,32,22,0.1);
+      width: 100%;
+    }
+    .score-num {
+      font-size: 64px; font-weight: 900;
+      color: #c0561e;
+      line-height: 1;
+    }
+    .score-sub {
+      font-size: 14px; color: #8b7355;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .score-breakdown {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .score-item {
+      display: flex; flex-direction: column;
+      gap: 4px; align-items: center;
+    }
+    .score-item-num {
+      font-size: 24px; font-weight: 900;
+    }
+    .score-item-num.ok { color: #1a7a3e; }
+    .score-item-num.ng { color: #c0561e; }
+    .score-item-label {
+      font-size: 11px; color: #b5a08a;
+      font-weight: 700; letter-spacing: 0.1em;
+    }
+    .wrong-list-section { width: 100%; }
+    .wrong-list-title {
+      font-size: 12px; font-weight: 700;
+      color: #b5a08a; letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .wrong-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .wrong-item {
+      background: #fff;
+      border: 2px solid #f3ede6;
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 16px; font-weight: 700;
+      color: #2d2016;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 2px;
+    }
+    .wrong-item-reading {
+      font-size: 10px; color: #b5a08a; font-weight: 500;
+    }
+    .retry-btn {
+      width: 100%;
+      background: #c0561e;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px; font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    .retry-btn:active { opacity: 0.85; }
+    .home-btn {
+      background: none;
+      border: 2px solid #e8ddd0;
+      border-radius: 18px;
+      padding: 16px;
+      width: 100%;
+      font-size: 15px; font-weight: 700;
+      color: #8b7355;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      transition: background 0.15s;
+    }
+    .home-btn:active { background: #f3ede6; }
+
+    /* ローディング */
+    .loading-indicator {
+      display: flex; align-items: center;
+      gap: 8px;
+      font-size: 13px; color: #b5a08a;
+      font-weight: 700;
+      justify-content: center;
+      padding: 4px 0;
+      min-height: 22px;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #e8ddd0;
+      border-top-color: #c0561e;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== スタート画面 ===== -->
+  <div id="start-screen" class="screen active">
+    <div class="app-icon">📖</div>
+    <div>
+      <div class="app-title">かんじ手帳</div>
+      <div class="app-sub">手書きで漢字を練習しよう<br>1セット10問</div>
+    </div>
+
+    <div class="level-section">
+      <span class="level-label">LEVEL を選ぼう</span>
+      <div class="level-grid">
+        <button class="level-btn" data-level="1" onclick="selectLevel(1)">
+          <span class="lv-kanji">一</span>
+          <span class="lv-label">1年生</span>
+        </button>
+        <button class="level-btn" data-level="2" onclick="selectLevel(2)">
+          <span class="lv-kanji">二</span>
+          <span class="lv-label">2年生</span>
+        </button>
+        <button class="level-btn" data-level="3" onclick="selectLevel(3)">
+          <span class="lv-kanji">三</span>
+          <span class="lv-label">3年生</span>
+        </button>
+        <button class="level-btn" data-level="4" onclick="selectLevel(4)">
+          <span class="lv-kanji">四</span>
+          <span class="lv-label">4年生</span>
+        </button>
+        <button class="level-btn" data-level="5" onclick="selectLevel(5)">
+          <span class="lv-kanji">五</span>
+          <span class="lv-label">5年生</span>
+        </button>
+        <button class="level-btn" data-level="6" onclick="selectLevel(6)">
+          <span class="lv-kanji">六</span>
+          <span class="lv-label">6年生</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn" disabled onclick="startQuiz()">
+      はじめる →
+    </button>
+  </div>
+
+  <!-- ===== クイズ画面 ===== -->
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-header">
+      <span class="header-title" id="header-level-label">1年生</span>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+      </div>
+      <span class="progress-text" id="progress-text">0 / 30</span>
+    </div>
+
+    <div class="quiz-body">
+      <!-- 問題カード -->
+      <div class="question-card">
+        <div class="question-hint">この読みかたの漢字を書こう！</div>
+        <div class="question-reading" id="question-reading">―</div>
+        <div class="question-meaning" id="question-meaning">意味の例</div>
+      </div>
+
+      <!-- 手書きキャンバス -->
+      <div class="canvas-section">
+        <span class="canvas-label">ここに書こう</span>
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas id="draw-canvas"></canvas>
+          <svg class="canvas-guide" id="canvas-guide" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="loading-indicator" id="loading-indicator" style="display:none">
+          <div class="spinner"></div>
+          <span>判定中...</span>
+        </div>
+        <div class="canvas-actions">
+          <button class="clear-btn" onclick="clearCanvas()">消す</button>
+          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">答えを送る</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 判定オーバーレイ -->
+  <div class="result-overlay" id="result-overlay">
+    <div class="result-card">
+      <div class="result-icon" id="result-icon">🎉</div>
+      <div class="result-label" id="result-label">せいかい！</div>
+      <div class="result-detail" id="result-detail"></div>
+      <div class="result-answer" id="result-answer"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">つぎへ →</button>
+    </div>
+  </div>
+
+  <!-- ===== 結果画面 ===== -->
+  <div id="result-screen" class="screen">
+    <div class="final-icon" id="final-icon">🏆</div>
+    <div class="final-title" id="final-title">おわり！</div>
+    <div class="score-card">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-sub">/ 10問 せいかい</div>
+      <div class="score-breakdown">
+        <div class="score-item">
+          <span class="score-item-num ok" id="correct-count">0</span>
+          <span class="score-item-label">せいかい</span>
+        </div>
+        <div class="score-item">
+          <span class="score-item-num ng" id="wrong-count">0</span>
+          <span class="score-item-label">まちがい</span>
+        </div>
+      </div>
+    </div>
+    <div class="wrong-list-section" id="wrong-list-section" style="display:none">
+      <div class="wrong-list-title">まちがえた漢字</div>
+      <div class="wrong-list" id="wrong-list"></div>
+    </div>
+    <button class="retry-btn" onclick="retryQuiz()">もう一度やる 🔄</button>
+    <button class="home-btn" onclick="goHome()">レベル選択へ</button>
+  </div>
+
+</div>
+
+<script>
+// ===== 単語データ =====
+const KANJI_DATA = {
+  1: [
+    { kanji: "山", reading: "やま", meaning: "高くそびえる地形" },
+    { kanji: "川", reading: "かわ", meaning: "流れる水" },
+    { kanji: "火", reading: "ひ", meaning: "燃えるもの" },
+    { kanji: "水", reading: "みず", meaning: "飲める液体" },
+    { kanji: "木", reading: "き", meaning: "植物の一種" },
+    { kanji: "土", reading: "つち", meaning: "地面のもと" },
+    { kanji: "日", reading: "にち・ひ", meaning: "太陽・一日" },
+    { kanji: "月", reading: "つき", meaning: "夜空に光る天体" },
+    { kanji: "金", reading: "きん", meaning: "光る金属" },
+    { kanji: "人", reading: "ひと", meaning: "人間のこと" },
+    { kanji: "口", reading: "くち", meaning: "食べる・話すところ" },
+    { kanji: "手", reading: "て", meaning: "物をつかむ部分" },
+    { kanji: "目", reading: "め", meaning: "見るための器官" },
+    { kanji: "耳", reading: "みみ", meaning: "聞くための器官" },
+    { kanji: "足", reading: "あし", meaning: "歩くための体の部分" },
+    { kanji: "大", reading: "おお（きい）", meaning: "サイズが大きい" },
+    { kanji: "小", reading: "ちい（さい）", meaning: "サイズが小さい" },
+    { kanji: "中", reading: "なか", meaning: "まんなか・うち" },
+    { kanji: "上", reading: "うえ", meaning: "高いところ" },
+    { kanji: "下", reading: "した", meaning: "低いところ" },
+    { kanji: "右", reading: "みぎ", meaning: "右の方向" },
+    { kanji: "左", reading: "ひだり", meaning: "左の方向" },
+    { kanji: "円", reading: "えん", meaning: "お金の単位・丸い形" },
+    { kanji: "力", reading: "ちから", meaning: "パワー" },
+    { kanji: "気", reading: "き", meaning: "気持ち・空気" },
+    { kanji: "犬", reading: "いぬ", meaning: "ペットの動物" },
+    { kanji: "花", reading: "はな", meaning: "きれいに咲くもの" },
+    { kanji: "空", reading: "そら", meaning: "青く広がる上の空間" },
+    { kanji: "音", reading: "おと", meaning: "耳で聞こえるもの" },
+    { kanji: "田", reading: "た", meaning: "お米を作る土地" },
+    { kanji: "石", reading: "いし", meaning: "硬い鉱物" },
+    { kanji: "林", reading: "はやし", meaning: "木が集まった場所" },
+    { kanji: "森", reading: "もり", meaning: "たくさんの木がある場所" },
+    { kanji: "雨", reading: "あめ", meaning: "空から降る水" },
+    { kanji: "竹", reading: "たけ", meaning: "まっすぐ伸びる植物" },
+  ],
+  2: [
+    { kanji: "春", reading: "はる", meaning: "桜が咲く季節" },
+    { kanji: "夏", reading: "なつ", meaning: "暑い季節" },
+    { kanji: "秋", reading: "あき", meaning: "紅葉の季節" },
+    { kanji: "冬", reading: "ふゆ", meaning: "寒い季節" },
+    { kanji: "朝", reading: "あさ", meaning: "一日の始まり" },
+    { kanji: "昼", reading: "ひる", meaning: "真ん中の時間帯" },
+    { kanji: "夜", reading: "よる", meaning: "暗い時間帯" },
+    { kanji: "晴", reading: "は（れ）", meaning: "天気がよい" },
+    { kanji: "雲", reading: "くも", meaning: "空に浮かぶもの" },
+    { kanji: "風", reading: "かぜ", meaning: "空気の流れ" },
+    { kanji: "雪", reading: "ゆき", meaning: "白く降るもの" },
+    { kanji: "光", reading: "ひかり", meaning: "明るくするもの" },
+    { kanji: "色", reading: "いろ", meaning: "赤・青・緑など" },
+    { kanji: "海", reading: "うみ", meaning: "広い水の場所" },
+    { kanji: "池", reading: "いけ", meaning: "小さい水のたまり" },
+    { kanji: "岩", reading: "いわ", meaning: "大きな石" },
+    { kanji: "谷", reading: "たに", meaning: "山と山の間" },
+    { kanji: "原", reading: "はら", meaning: "広い平地" },
+    { kanji: "道", reading: "みち", meaning: "歩く通路" },
+    { kanji: "町", reading: "まち", meaning: "人が集まる場所" },
+    { kanji: "村", reading: "むら", meaning: "田舎の集落" },
+    { kanji: "語", reading: "ご", meaning: "言葉・言語" },
+    { kanji: "話", reading: "はなし", meaning: "会話・物語" },
+    { kanji: "聞", reading: "き（く）", meaning: "音を耳で受け取る" },
+    { kanji: "読", reading: "よ（む）", meaning: "文字を目で理解する" },
+    { kanji: "書", reading: "か（く）", meaning: "文字を書く" },
+    { kanji: "算", reading: "さん", meaning: "計算すること" },
+    { kanji: "数", reading: "かず", meaning: "数をかぞえる" },
+    { kanji: "図", reading: "ず", meaning: "絵や地図" },
+    { kanji: "工", reading: "こう", meaning: "ものを作ること" },
+    { kanji: "作", reading: "つく（る）", meaning: "ものを製造する" },
+    { kanji: "画", reading: "が", meaning: "絵・映像" },
+    { kanji: "親", reading: "おや", meaning: "お父さん・お母さん" },
+    { kanji: "友", reading: "とも", meaning: "仲の良い人" },
+    { kanji: "兄", reading: "あに", meaning: "年上の男のきょうだい" },
+  ],
+  3: [
+    { kanji: "反", reading: "はん", meaning: "逆らう・反対" },
+    { kanji: "表", reading: "ひょう・おもて", meaning: "外側・一覧" },
+    { kanji: "期", reading: "き", meaning: "時間の区切り" },
+    { kanji: "究", reading: "きゅう", meaning: "調べ尽くす" },
+    { kanji: "区", reading: "く", meaning: "区域・区分" },
+    { kanji: "苦", reading: "く", meaning: "辛い・苦しい" },
+    { kanji: "去", reading: "さ（る）", meaning: "去っていく" },
+    { kanji: "起", reading: "お（きる）", meaning: "立ち上がる・始まる" },
+    { kanji: "急", reading: "きゅう", meaning: "速い・突然" },
+    { kanji: "君", reading: "きみ", meaning: "あなた（呼びかけ）" },
+    { kanji: "係", reading: "かかり", meaning: "担当・つながり" },
+    { kanji: "薬", reading: "くすり", meaning: "病気を治すもの" },
+    { kanji: "荷", reading: "に", meaning: "運ぶ重さ・荷物" },
+    { kanji: "号", reading: "ごう", meaning: "番号・記号" },
+    { kanji: "根", reading: "ね", meaning: "植物の地下部分" },
+    { kanji: "祭", reading: "まつり", meaning: "お祭り・行事" },
+    { kanji: "使", reading: "つか（う）", meaning: "活用する" },
+    { kanji: "始", reading: "はじ（まる）", meaning: "スタートする" },
+    { kanji: "指", reading: "ゆび", meaning: "手の先の部分" },
+    { kanji: "歯", reading: "は", meaning: "口の中の硬いもの" },
+    { kanji: "詩", reading: "し", meaning: "言葉で書く文学" },
+    { kanji: "持", reading: "も（つ）", meaning: "手でつかむ" },
+    { kanji: "事", reading: "こと", meaning: "できごと" },
+    { kanji: "次", reading: "つぎ", meaning: "その後に来るもの" },
+    { kanji: "主", reading: "しゅ・ぬし", meaning: "中心・持ち主" },
+    { kanji: "守", reading: "まも（る）", meaning: "護る・遵守する" },
+    { kanji: "取", reading: "と（る）", meaning: "手に入れる" },
+    { kanji: "受", reading: "う（ける）", meaning: "もらう・引き受ける" },
+    { kanji: "想", reading: "そう", meaning: "考え・イメージ" },
+    { kanji: "追", reading: "お（う）", meaning: "後を追いかける" },
+    { kanji: "転", reading: "てん", meaning: "回る・変わる" },
+    { kanji: "度", reading: "ど", meaning: "回数・温度の単位" },
+    { kanji: "投", reading: "な（げる）", meaning: "物を投げる" },
+    { kanji: "島", reading: "しま", meaning: "海に囲まれた陸地" },
+    { kanji: "登", reading: "のぼ（る）", meaning: "高い所へ上がる" },
+  ],
+  4: [
+    { kanji: "愛", reading: "あい", meaning: "大切に思う気持ち" },
+    { kanji: "案", reading: "あん", meaning: "計画・アイデア" },
+    { kanji: "以", reading: "い", meaning: "〜より・〜で" },
+    { kanji: "位", reading: "い", meaning: "順位・場所" },
+    { kanji: "囲", reading: "かこ（む）", meaning: "周りを取り囲む" },
+    { kanji: "印", reading: "いん", meaning: "しるし・スタンプ" },
+    { kanji: "英", reading: "えい", meaning: "すぐれた・英語" },
+    { kanji: "栄", reading: "さか（える）", meaning: "繁栄する" },
+    { kanji: "塩", reading: "しお", meaning: "料理に使う調味料" },
+    { kanji: "岡", reading: "おか", meaning: "小さな丘" },
+    { kanji: "億", reading: "おく", meaning: "一億＝百百百百百百百百百百" },
+    { kanji: "加", reading: "くわ（える）", meaning: "付け加える" },
+    { kanji: "果", reading: "か・くだもの", meaning: "結果・果物" },
+    { kanji: "貨", reading: "か", meaning: "お金・商品" },
+    { kanji: "課", reading: "か", meaning: "分けた仕事・授業" },
+    { kanji: "芽", reading: "め", meaning: "植物の新しい部分" },
+    { kanji: "害", reading: "がい", meaning: "損害・被害" },
+    { kanji: "街", reading: "まち・がい", meaning: "店が並ぶ道" },
+    { kanji: "覚", reading: "おぼ（える）", meaning: "記憶する" },
+    { kanji: "型", reading: "かた", meaning: "形・モデル" },
+    { kanji: "径", reading: "けい", meaning: "直径・直径の線" },
+    { kanji: "景", reading: "けい", meaning: "風景・眺め" },
+    { kanji: "欠", reading: "か（ける）", meaning: "足りない" },
+    { kanji: "結", reading: "むす（ぶ）", meaning: "つなぐ・まとめる" },
+    { kanji: "建", reading: "た（てる）", meaning: "建物を作る" },
+    { kanji: "健", reading: "けん", meaning: "体が丈夫" },
+    { kanji: "験", reading: "けん", meaning: "試験・経験" },
+    { kanji: "固", reading: "かた（い）", meaning: "硬くて動かない" },
+    { kanji: "功", reading: "こう", meaning: "成功・手柄" },
+    { kanji: "候", reading: "こう", meaning: "気候・候補" },
+    { kanji: "航", reading: "こう", meaning: "船や飛行機で進む" },
+    { kanji: "告", reading: "こく", meaning: "知らせる" },
+    { kanji: "差", reading: "さ", meaning: "違い・差分" },
+    { kanji: "菜", reading: "な", meaning: "野菜・おかず" },
+    { kanji: "最", reading: "さい", meaning: "いちばん" },
+  ],
+  5: [
+    { kanji: "圧", reading: "あつ", meaning: "押さえる力" },
+    { kanji: "移", reading: "うつ（る）", meaning: "場所が変わる" },
+    { kanji: "因", reading: "いん", meaning: "原因・理由" },
+    { kanji: "永", reading: "えい", meaning: "ずっと続く" },
+    { kanji: "営", reading: "えい", meaning: "経営する・運営" },
+    { kanji: "衛", reading: "えい", meaning: "守る・衛星" },
+    { kanji: "易", reading: "い", meaning: "簡単・取引" },
+    { kanji: "益", reading: "えき", meaning: "利益・役に立つ" },
+    { kanji: "液", reading: "えき", meaning: "液体・汁" },
+    { kanji: "演", reading: "えん", meaning: "演じる・公演" },
+    { kanji: "応", reading: "おう", meaning: "答える・対応" },
+    { kanji: "往", reading: "おう", meaning: "行く・往復" },
+    { kanji: "恩", reading: "おん", meaning: "お世話・恩返し" },
+    { kanji: "仮", reading: "かり", meaning: "仮の・一時的" },
+    { kanji: "価", reading: "か", meaning: "値段・価値" },
+    { kanji: "可", reading: "か", meaning: "できる・許す" },
+    { kanji: "快", reading: "かい", meaning: "気持ちいい・快適" },
+    { kanji: "解", reading: "と（く）", meaning: "解く・理解する" },
+    { kanji: "格", reading: "かく", meaning: "品質・資格" },
+    { kanji: "確", reading: "かく", meaning: "確かめる・確実" },
+    { kanji: "額", reading: "がく", meaning: "金額・額縁" },
+    { kanji: "刊", reading: "かん", meaning: "発行する・本" },
+    { kanji: "幹", reading: "かん", meaning: "木の幹・中心" },
+    { kanji: "慣", reading: "な（れる）", meaning: "慣れ親しむ" },
+    { kanji: "眼", reading: "がん", meaning: "目・眼球" },
+    { kanji: "基", reading: "き", meaning: "基本・土台" },
+    { kanji: "寄", reading: "よ（る）", meaning: "近づく・寄付" },
+    { kanji: "規", reading: "き", meaning: "ルール・規則" },
+    { kanji: "技", reading: "わざ", meaning: "技術・スキル" },
+    { kanji: "義", reading: "ぎ", meaning: "正しい道・意味" },
+    { kanji: "逆", reading: "ぎゃく", meaning: "反対・逆向き" },
+    { kanji: "久", reading: "ひさ（しい）", meaning: "長い時間" },
+    { kanji: "旧", reading: "きゅう", meaning: "古い・昔の" },
+    { kanji: "居", reading: "い（る）", meaning: "そこにいる" },
+    { kanji: "許", reading: "ゆる（す）", meaning: "許可する" },
+  ],
+  6: [
+    { kanji: "異", reading: "こと（なる）", meaning: "違う・異なる" },
+    { kanji: "遺", reading: "い", meaning: "残された・遺産" },
+    { kanji: "域", reading: "いき", meaning: "区域・範囲" },
+    { kanji: "宇", reading: "う", meaning: "宇宙・広い空間" },
+    { kanji: "映", reading: "うつ（る）", meaning: "映像・映す" },
+    { kanji: "延", reading: "のば（す）", meaning: "延長する" },
+    { kanji: "沿", reading: "そ（う）", meaning: "沿って進む" },
+    { kanji: "我", reading: "わ", meaning: "自分自身" },
+    { kanji: "灰", reading: "はい", meaning: "燃えた後のもの" },
+    { kanji: "拡", reading: "かく", meaning: "広げる" },
+    { kanji: "革", reading: "かく", meaning: "皮・変革" },
+    { kanji: "閣", reading: "かく", meaning: "内閣・建物" },
+    { kanji: "割", reading: "わ（る）", meaning: "分ける・割合" },
+    { kanji: "株", reading: "かぶ", meaning: "株式・切り株" },
+    { kanji: "干", reading: "ほ（す）", meaning: "乾かす・干す" },
+    { kanji: "巻", reading: "ま（く）", meaning: "巻く・冊" },
+    { kanji: "看", reading: "かん", meaning: "見守る・看護" },
+    { kanji: "簡", reading: "かん", meaning: "簡単・シンプル" },
+    { kanji: "危", reading: "あぶ（ない）", meaning: "危険な状態" },
+    { kanji: "机", reading: "つくえ", meaning: "勉強用の台" },
+    { kanji: "揮", reading: "き", meaning: "振るう・指揮" },
+    { kanji: "貴", reading: "たか（い）", meaning: "価値が高い" },
+    { kanji: "疑", reading: "うたが（う）", meaning: "疑問に思う" },
+    { kanji: "吸", reading: "す（う）", meaning: "空気を吸う" },
+    { kanji: "供", reading: "そな（える）", meaning: "提供する・子供" },
+    { kanji: "胸", reading: "むね", meaning: "体の前側・心" },
+    { kanji: "郷", reading: "きょう", meaning: "故郷・ふるさと" },
+    { kanji: "勤", reading: "つと（める）", meaning: "仕事をする" },
+    { kanji: "筋", reading: "すじ", meaning: "筋肉・道筋" },
+    { kanji: "系", reading: "けい", meaning: "つながり・系列" },
+    { kanji: "敬", reading: "うやま（う）", meaning: "尊敬する" },
+    { kanji: "警", reading: "けい", meaning: "警告・警察" },
+    { kanji: "劇", reading: "げき", meaning: "演劇・激しい" },
+    { kanji: "激", reading: "はげ（しい）", meaning: "非常に強い" },
+    { kanji: "穴", reading: "あな", meaning: "くぼんだ空間" },
+  ]
+};
+
+// ===== 状態 =====
+let selectedLevel = null;
+let currentQuestions = [];
+let currentIndex = 0;
+let correctCount = 0;
+let wrongList = [];
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let hasDrawn = false;
+let isSubmitting = false;
+let canvasInitialized = false;
+
+// ===== キャンバス =====
+let canvas, ctx;
+
+function initCanvas() {
+  canvas = document.getElementById('draw-canvas');
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth;
+  const h = Math.round(w * 0.8);
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.height = h + 'px';
+  ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  drawGuide(w, h);
+  ctx.strokeStyle = '#2d2016';
+  ctx.lineWidth = Math.max(4, w / 60);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // タッチ・マウスイベント（初回のみ登録）
+  if (!canvasInitialized) {
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); }, { passive: false });
+    canvas.addEventListener('touchend', endDraw);
+    canvasInitialized = true;
+  }
+}
+
+function drawGuide(w, h) {
+  const guide = document.getElementById('canvas-guide');
+  guide.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  guide.setAttribute('width', w);
+  guide.setAttribute('height', h);
+  const cx = w / 2, cy = h / 2;
+  const strokeColor = '#e8ddd0';
+  guide.innerHTML = `
+    <line x1="${cx}" y1="0" x2="${cx}" y2="${h}" stroke="${strokeColor}" stroke-width="1" stroke-dasharray="6,4"/>
+    <line x1="0" y1="${cy}" x2="${w}" y2="${cy}" stroke="${strokeColor}" stroke-width="1" stroke-dasharray="6,4"/>
+    <line x1="0" y1="0" x2="${w}" y2="${h}" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="4,8"/>
+    <line x1="${w}" y1="0" x2="0" y2="${h}" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="4,8"/>
+    <rect x="1" y="1" width="${w-2}" height="${h-2}" fill="none" stroke="${strokeColor}" stroke-width="2" rx="17"/>
+  `;
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+function startDraw(e) {
+  isDrawing = true;
+  const pos = getPos(e);
+  lastX = pos.x; lastY = pos.y;
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#2d2016';
+  ctx.fill();
+  hasDrawn = true;
+}
+
+function draw(e) {
+  if (!isDrawing) return;
+  const pos = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.stroke();
+  lastX = pos.x; lastY = pos.y;
+}
+
+function endDraw() { isDrawing = false; }
+
+function clearCanvas() {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  hasDrawn = false;
+}
+
+// ===== レベル選択 =====
+function selectLevel(level) {
+  selectedLevel = level;
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.level) === level);
+  });
+  document.getElementById('start-btn').disabled = false;
+}
+
+// ===== クイズ開始 =====
+function startQuiz() {
+  const all = KANJI_DATA[selectedLevel];
+  const shuffled = [...all].sort(() => Math.random() - 0.5);
+  currentQuestions = shuffled.slice(0, 10);
+  currentIndex = 0;
+  correctCount = 0;
+  wrongList = [];
+
+  document.getElementById('header-level-label').textContent = selectedLevel + '年生';
+  showScreen('quiz-screen');
+  initCanvas();
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = currentQuestions[currentIndex];
+  document.getElementById('question-reading').textContent = q.reading;
+  document.getElementById('question-meaning').textContent = q.meaning;
+  document.getElementById('progress-text').textContent = (currentIndex + 1) + ' / 10';
+  document.getElementById('progress-bar').style.width = ((currentIndex + 1) / 10 * 100) + '%';
+  clearCanvas();
+  hasDrawn = false;
+  isSubmitting = false;
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('loading-indicator').style.display = 'none';
+}
+
+// ===== 答え送信 =====
+async function submitAnswer() {
+  if (!hasDrawn || isSubmitting) return;
+  isSubmitting = true;
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('loading-indicator').style.display = 'flex';
+
+  const imageData = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  const q = currentQuestions[currentIndex];
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: 'image/jpeg', data: imageData }
+            },
+            {
+              type: 'text',
+              text: `この手書きの画像を見て、漢字の正誤判定をしてください。
+
+問題: 「${q.reading}」という読みの漢字を書く問題です。
+正解の漢字: 「${q.kanji}」
+
+画像に書かれた手書きの漢字を読み取り、「${q.kanji}」として判定できるかどうか判断してください。
+多少形が崩れていても、漢字として認識できれば正解とします。
+
+以下のJSON形式のみで回答してください（他の文は不要）:
+{"correct": true/false, "recognized": "認識した文字", "comment": "一言コメント（日本語・短く）"}`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content[0].text.trim();
+    let result;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      result = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+    } catch {
+      result = { correct: false, recognized: '?', comment: '読み取れませんでした' };
+    }
+
+    showResult(result);
+  } catch (err) {
+    document.getElementById('loading-indicator').style.display = 'none';
+    document.getElementById('submit-btn').disabled = false;
+    isSubmitting = false;
+    alert('エラーが発生しました。もう一度お試しください。');
+  }
+}
+
+function showResult(result) {
+  document.getElementById('loading-indicator').style.display = 'none';
+  const q = currentQuestions[currentIndex];
+  const overlay = document.getElementById('result-overlay');
+  const icon = document.getElementById('result-icon');
+  const label = document.getElementById('result-label');
+  const detail = document.getElementById('result-detail');
+  const answer = document.getElementById('result-answer');
+
+  if (result.correct) {
+    correctCount++;
+    icon.textContent = '🎉';
+    label.textContent = 'せいかい！';
+    label.className = 'result-label correct';
+    detail.textContent = result.comment || 'よくできました！';
+  } else {
+    wrongList.push(q);
+    icon.textContent = '😢';
+    label.textContent = 'もう少し！';
+    label.className = 'result-label wrong';
+    detail.textContent = result.recognized
+      ? `書いた文字:「${result.recognized}」 / ${result.comment || ''}`
+      : result.comment || 'もう一度練習してみよう';
+  }
+  answer.textContent = '正解: ' + q.kanji;
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = currentIndex < 9 ? 'つぎへ →' : '結果をみる';
+  overlay.classList.add('show');
+}
+
+function nextQuestion() {
+  document.getElementById('result-overlay').classList.remove('show');
+  currentIndex++;
+  if (currentIndex >= 10) {
+    showFinalResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showFinalResult() {
+  showScreen('result-screen');
+  document.getElementById('score-num').textContent = correctCount;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('wrong-count').textContent = 10 - correctCount;
+
+  const pct = correctCount / 10;
+  let icon = '🏆', title = 'すばらしい！';
+  if (pct < 0.5) { icon = '📚'; title = 'もっと練習しよう！'; }
+  else if (pct < 0.7) { icon = '💪'; title = 'よくがんばった！'; }
+  else if (pct < 0.9) { icon = '⭐'; title = 'なかなかいい！'; }
+  document.getElementById('final-icon').textContent = icon;
+  document.getElementById('final-title').textContent = title;
+
+  const wrongSection = document.getElementById('wrong-list-section');
+  const wrongListEl = document.getElementById('wrong-list');
+  if (wrongList.length > 0) {
+    wrongSection.style.display = 'block';
+    wrongListEl.innerHTML = wrongList.map(q =>
+      `<div class="wrong-item">
+        <span>${q.kanji}</span>
+        <span class="wrong-item-reading">${q.reading}</span>
+      </div>`
+    ).join('');
+  } else {
+    wrongSection.style.display = 'none';
+  }
+}
+
+function retryQuiz() { startQuiz(); }
+function goHome() { showScreen('start-screen'); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>
