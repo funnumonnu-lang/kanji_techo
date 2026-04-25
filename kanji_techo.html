@@ -805,15 +805,14 @@ function initCanvas() {
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
-  // タッチ・マウスイベント（初回のみ登録）
+  // PointerEvent（Apple Pencil / タッチ / マウス 統合）
   if (!canvasInitialized) {
-    canvas.addEventListener('mousedown', startDraw);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', endDraw);
-    canvas.addEventListener('mouseleave', endDraw);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); startDraw(e.touches[0]); }, { passive: false });
-    canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]); }, { passive: false });
-    canvas.addEventListener('touchend', endDraw);
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('pointerdown', e => { e.preventDefault(); startDraw(e); });
+    canvas.addEventListener('pointermove', e => { e.preventDefault(); draw(e); });
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointercancel', endDraw);
+    canvas.addEventListener('pointerleave', endDraw);
     canvasInitialized = true;
   }
 }
@@ -844,10 +843,19 @@ function getPos(e) {
   };
 }
 
+function getPressure(e) {
+  // Apple Pencilは pressure が 0〜1 で返る
+  if (e.pointerType === 'pen' && e.pressure > 0) return e.pressure;
+  return 0.5;
+}
+
 function startDraw(e) {
   isDrawing = true;
+  canvas.setPointerCapture(e.pointerId);
   const pos = getPos(e);
   lastX = pos.x; lastY = pos.y;
+  const pressure = getPressure(e);
+  ctx.lineWidth = Math.max(3, (canvas.width / 55) * (0.6 + pressure * 0.8));
   ctx.beginPath();
   ctx.arc(pos.x, pos.y, ctx.lineWidth / 2, 0, Math.PI * 2);
   ctx.fillStyle = '#2d2016';
@@ -858,6 +866,8 @@ function startDraw(e) {
 function draw(e) {
   if (!isDrawing) return;
   const pos = getPos(e);
+  const pressure = getPressure(e);
+  ctx.lineWidth = Math.max(3, (canvas.width / 55) * (0.6 + pressure * 0.8));
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
   ctx.lineTo(pos.x, pos.y);
@@ -917,7 +927,7 @@ async function submitAnswer() {
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'flex';
 
-  const imageData = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  const imageData = canvas.toDataURL('image/png').split(',')[1];
   const q = currentQuestions[currentIndex];
 
   try {
@@ -932,7 +942,7 @@ async function submitAnswer() {
           content: [
             {
               type: 'image',
-              source: { type: 'base64', media_type: 'image/jpeg', data: imageData }
+              source: { type: 'base64', media_type: 'image/png', data: imageData }
             },
             {
               type: 'text',
@@ -952,8 +962,12 @@ async function submitAnswer() {
       })
     });
 
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      throw new Error(errJson?.error?.message || 'API error ' + response.status);
+    }
     const data = await response.json();
-    const text = data.content[0].text.trim();
+    const text = data.content?.[0]?.text?.trim() || '';
     let result;
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -964,10 +978,8 @@ async function submitAnswer() {
 
     showResult(result);
   } catch (err) {
-    document.getElementById('loading-indicator').style.display = 'none';
-    document.getElementById('submit-btn').disabled = false;
-    isSubmitting = false;
-    alert('エラーが発生しました。もう一度お試しください。');
+    console.error('API Error:', err);
+    showResult({ correct: false, recognized: '?', comment: '通信エラー。スキップします。' });
   }
 }
 
