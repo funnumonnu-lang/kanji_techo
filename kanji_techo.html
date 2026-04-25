@@ -168,39 +168,109 @@
       font-weight: 500;
       line-height: 1.5;
     }
+    .question-example {
+      font-size: 15px; color: #4a3825;
+      font-weight: 700;
+      line-height: 1.6;
+      background: #fdf5ec;
+      border-left: 3px solid #e8874a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 6px;
+      text-align: left;
+    }
+    .question-example-label {
+      font-size: 10px; color: #c0561e;
+      font-weight: 700; letter-spacing: 0.1em;
+      display: block; margin-bottom: 2px;
+    }
+    .masked {
+      display: inline-block;
+      background: #2d2016;
+      color: #2d2016;
+      border-radius: 3px;
+      min-width: 1em;
+      line-height: 1;
+    }
 
-    /* 手書きエリア */
-    .canvas-section {
+    /* 入力エリア（Scribble対応） */
+    .input-section {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
-    .canvas-label {
+    .input-label {
       font-size: 11px; font-weight: 700;
       color: #b5a08a;
       letter-spacing: 0.1em;
     }
-    .canvas-wrap {
+    .scribble-wrap {
       position: relative;
       background: #fff;
-      border-radius: 18px;
+      border-radius: 20px;
       box-shadow: 0 2px 12px rgba(45,32,22,0.08);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 16px 14px;
+      gap: 10px;
+      min-height: 160px;
     }
-    #draw-canvas {
-      display: block;
-      width: 100%;
-      cursor: crosshair;
-      touch-action: none;
-    }
-    /* 罫線（漢字練習帳風） */
-    .canvas-guide {
+    /* 漢字練習帳の格子ガイド（背景） */
+    .scribble-wrap::before {
+      content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 12px;
+      border: 2px solid #e8ddd0;
+      border-radius: 10px;
       pointer-events: none;
     }
-
-    .canvas-actions {
+    .scribble-wrap::after {
+      content: '';
+      position: absolute;
+      top: 12px; bottom: 12px;
+      left: 50%; width: 0;
+      border-left: 1px dashed #e8ddd0;
+      pointer-events: none;
+    }
+    .scribble-hline {
+      position: absolute;
+      left: 12px; right: 12px;
+      top: 50%; height: 0;
+      border-top: 1px dashed #e8ddd0;
+      pointer-events: none;
+    }
+    #kanji-input {
+      position: relative;
+      width: 100%;
+      max-width: 200px;
+      text-align: center;
+      font-size: 72px;
+      font-weight: 900;
+      font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+      color: #2d2016;
+      background: transparent;
+      border: none;
+      outline: none;
+      caret-color: #c0561e;
+      line-height: 1.1;
+      /* Scribble が働くよう -webkit-user-select は auto のまま */
+      -webkit-user-select: auto;
+      z-index: 1;
+    }
+    #kanji-input::placeholder {
+      color: #d4c4b0;
+      font-size: 48px;
+    }
+    .pencil-hint {
+      font-size: 12px; color: #b5a08a;
+      font-weight: 500;
+      display: flex; align-items: center; gap: 4px;
+      z-index: 1;
+    }
+    .input-actions {
       display: flex;
       gap: 10px;
     }
@@ -432,7 +502,7 @@
     <div class="app-icon">📖</div>
     <div>
       <div class="app-title">かんじ手帳</div>
-      <div class="app-sub">手書きで漢字を練習しよう<br>1セット10問</div>
+      <div class="app-sub">Apple Pencilで漢字を練習しよう<br>1セット10問</div>
     </div>
 
     <div class="level-section">
@@ -486,22 +556,37 @@
         <div class="question-hint">この読みかたの漢字を書こう！</div>
         <div class="question-reading" id="question-reading">―</div>
         <div class="question-meaning" id="question-meaning">意味の例</div>
+        <div class="question-example" id="question-example" style="display:none">
+          <span class="question-example-label">れいぶん</span>
+          <span id="question-example-text"></span>
+        </div>
       </div>
 
-      <!-- 手書きキャンバス -->
-      <div class="canvas-section">
-        <span class="canvas-label">ここに書こう</span>
-        <div class="canvas-wrap" id="canvas-wrap">
-          <canvas id="draw-canvas"></canvas>
-          <svg class="canvas-guide" id="canvas-guide" xmlns="http://www.w3.org/2000/svg"></svg>
+      <!-- Scribble入力エリア -->
+      <div class="input-section">
+        <span class="input-label">✏️ Apple Pencilで書こう</span>
+        <div class="scribble-wrap">
+          <div class="scribble-hline"></div>
+          <input
+            id="kanji-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="漢字"
+            oninput="onInputChange()"
+          />
+          <span class="pencil-hint">🍎 Scribbleで自動変換されます</span>
         </div>
         <div class="loading-indicator" id="loading-indicator" style="display:none">
           <div class="spinner"></div>
           <span>判定中...</span>
         </div>
-        <div class="canvas-actions">
-          <button class="clear-btn" onclick="clearCanvas()">消す</button>
-          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()">答えを送る</button>
+        <div class="input-actions">
+          <button class="clear-btn" onclick="clearInput()">消す</button>
+          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>答えを送る</button>
         </div>
       </div>
     </div>
@@ -550,228 +635,230 @@
 // ===== 単語データ =====
 const KANJI_DATA = {
   1: [
-    { kanji: "山", reading: "やま", meaning: "高くそびえる地形" },
-    { kanji: "川", reading: "かわ", meaning: "流れる水" },
-    { kanji: "火", reading: "ひ", meaning: "燃えるもの" },
-    { kanji: "水", reading: "みず", meaning: "飲める液体" },
-    { kanji: "木", reading: "き", meaning: "植物の一種" },
-    { kanji: "土", reading: "つち", meaning: "地面のもと" },
-    { kanji: "日", reading: "にち・ひ", meaning: "太陽・一日" },
-    { kanji: "月", reading: "つき", meaning: "夜空に光る天体" },
-    { kanji: "金", reading: "きん", meaning: "光る金属" },
-    { kanji: "人", reading: "ひと", meaning: "人間のこと" },
-    { kanji: "口", reading: "くち", meaning: "食べる・話すところ" },
-    { kanji: "手", reading: "て", meaning: "物をつかむ部分" },
-    { kanji: "目", reading: "め", meaning: "見るための器官" },
-    { kanji: "耳", reading: "みみ", meaning: "聞くための器官" },
-    { kanji: "足", reading: "あし", meaning: "歩くための体の部分" },
-    { kanji: "大", reading: "おお（きい）", meaning: "サイズが大きい" },
-    { kanji: "小", reading: "ちい（さい）", meaning: "サイズが小さい" },
-    { kanji: "中", reading: "なか", meaning: "まんなか・うち" },
-    { kanji: "上", reading: "うえ", meaning: "高いところ" },
-    { kanji: "下", reading: "した", meaning: "低いところ" },
-    { kanji: "右", reading: "みぎ", meaning: "右の方向" },
-    { kanji: "左", reading: "ひだり", meaning: "左の方向" },
-    { kanji: "円", reading: "えん", meaning: "お金の単位・丸い形" },
-    { kanji: "力", reading: "ちから", meaning: "パワー" },
-    { kanji: "気", reading: "き", meaning: "気持ち・空気" },
-    { kanji: "犬", reading: "いぬ", meaning: "ペットの動物" },
-    { kanji: "花", reading: "はな", meaning: "きれいに咲くもの" },
-    { kanji: "空", reading: "そら", meaning: "青く広がる上の空間" },
-    { kanji: "音", reading: "おと", meaning: "耳で聞こえるもの" },
-    { kanji: "田", reading: "た", meaning: "お米を作る土地" },
-    { kanji: "石", reading: "いし", meaning: "硬い鉱物" },
-    { kanji: "林", reading: "はやし", meaning: "木が集まった場所" },
-    { kanji: "森", reading: "もり", meaning: "たくさんの木がある場所" },
-    { kanji: "雨", reading: "あめ", meaning: "空から降る水" },
-    { kanji: "竹", reading: "たけ", meaning: "まっすぐ伸びる植物" },
+    { kanji: "山", reading: "やま", meaning: "高くそびえる地形", example: "あの●は雪がつもっている。" },
+    { kanji: "川", reading: "かわ", meaning: "流れる水の道", example: "●に魚がたくさんいる。" },
+    { kanji: "火", reading: "ひ", meaning: "燃えて光るもの", example: "キャンプで●をおこした。" },
+    { kanji: "水", reading: "みず", meaning: "飲める透明な液体", example: "●をコップに注ぐ。" },
+    { kanji: "木", reading: "き", meaning: "幹と葉のある植物", example: "公園の●に鳥がとまった。" },
+    { kanji: "土", reading: "つち", meaning: "地面をつくるもの", example: "●に種をまく。" },
+    { kanji: "日", reading: "にち・ひ", meaning: "太陽・一日のこと", example: "今●は晴れている。" },
+    { kanji: "月", reading: "つき", meaning: "夜空に光る天体", example: "丸い●が空に浮かんでいる。" },
+    { kanji: "金", reading: "きん", meaning: "光る貴重な金属", example: "●メダルをとる。" },
+    { kanji: "人", reading: "ひと", meaning: "人間のこと", example: "駅にたくさんの●がいる。" },
+    { kanji: "口", reading: "くち", meaning: "食べる・話すところ", example: "●を大きくあけて歌う。" },
+    { kanji: "手", reading: "て", meaning: "物をつかむ体の部分", example: "●を洗ってから食べる。" },
+    { kanji: "目", reading: "め", meaning: "見るための器官", example: "●を細めて遠くを見る。" },
+    { kanji: "耳", reading: "みみ", meaning: "聞くための器官", example: "●をすませて音楽を聴く。" },
+    { kanji: "足", reading: "あし", meaning: "歩くための体の部分", example: "●が速い選手が一位になった。" },
+    { kanji: "大", reading: "おお（きい）", meaning: "サイズがとても大きい", example: "●きな犬が走ってきた。" },
+    { kanji: "小", reading: "ちい（さい）", meaning: "サイズがとても小さい", example: "●さな虫を見つけた。" },
+    { kanji: "中", reading: "なか", meaning: "まんなか・内側", example: "箱の●におもちゃが入っている。" },
+    { kanji: "上", reading: "うえ", meaning: "高いところ", example: "棚の●に本がある。" },
+    { kanji: "下", reading: "した", meaning: "低いところ", example: "テーブルの●に猫がいる。" },
+    { kanji: "右", reading: "みぎ", meaning: "右の方向", example: "●に曲がると公園がある。" },
+    { kanji: "左", reading: "ひだり", meaning: "左の方向", example: "●手でボールをとった。" },
+    { kanji: "円", reading: "えん", meaning: "丸い形・お金の単位", example: "このりんごは百●です。" },
+    { kanji: "力", reading: "ちから", meaning: "強さ・パワー", example: "●いっぱい綱引きをした。" },
+    { kanji: "気", reading: "き", meaning: "気持ち・空気・元気", example: "元●に走り回る。" },
+    { kanji: "犬", reading: "いぬ", meaning: "人気のペット動物", example: "●の散歩をする。" },
+    { kanji: "花", reading: "はな", meaning: "きれいに咲くもの", example: "庭に赤い●が咲いた。" },
+    { kanji: "空", reading: "そら", meaning: "青く広がる上の世界", example: "青い●に雲がある。" },
+    { kanji: "音", reading: "おと", meaning: "耳で聞こえるもの", example: "ピアノの●が聞こえる。" },
+    { kanji: "田", reading: "た", meaning: "お米を育てる土地", example: "秋になると●んぼが金色になる。" },
+    { kanji: "石", reading: "いし", meaning: "硬い鉱物", example: "川原で丸い●を拾った。" },
+    { kanji: "林", reading: "はやし", meaning: "木が集まった場所", example: "●の中を散歩する。" },
+    { kanji: "森", reading: "もり", meaning: "たくさんの木がある場所", example: "深い●に動物がすんでいる。" },
+    { kanji: "雨", reading: "あめ", meaning: "空から降る水", example: "●が降ってきたので傘をさした。" },
+    { kanji: "竹", reading: "たけ", meaning: "まっすぐ伸びる植物", example: "●やぶの中でパンダが食事している。" },
   ],
   2: [
-    { kanji: "春", reading: "はる", meaning: "桜が咲く季節" },
-    { kanji: "夏", reading: "なつ", meaning: "暑い季節" },
-    { kanji: "秋", reading: "あき", meaning: "紅葉の季節" },
-    { kanji: "冬", reading: "ふゆ", meaning: "寒い季節" },
-    { kanji: "朝", reading: "あさ", meaning: "一日の始まり" },
-    { kanji: "昼", reading: "ひる", meaning: "真ん中の時間帯" },
-    { kanji: "夜", reading: "よる", meaning: "暗い時間帯" },
-    { kanji: "晴", reading: "は（れ）", meaning: "天気がよい" },
-    { kanji: "雲", reading: "くも", meaning: "空に浮かぶもの" },
-    { kanji: "風", reading: "かぜ", meaning: "空気の流れ" },
-    { kanji: "雪", reading: "ゆき", meaning: "白く降るもの" },
-    { kanji: "光", reading: "ひかり", meaning: "明るくするもの" },
-    { kanji: "色", reading: "いろ", meaning: "赤・青・緑など" },
-    { kanji: "海", reading: "うみ", meaning: "広い水の場所" },
-    { kanji: "池", reading: "いけ", meaning: "小さい水のたまり" },
-    { kanji: "岩", reading: "いわ", meaning: "大きな石" },
-    { kanji: "谷", reading: "たに", meaning: "山と山の間" },
-    { kanji: "原", reading: "はら", meaning: "広い平地" },
-    { kanji: "道", reading: "みち", meaning: "歩く通路" },
-    { kanji: "町", reading: "まち", meaning: "人が集まる場所" },
-    { kanji: "村", reading: "むら", meaning: "田舎の集落" },
-    { kanji: "語", reading: "ご", meaning: "言葉・言語" },
-    { kanji: "話", reading: "はなし", meaning: "会話・物語" },
-    { kanji: "聞", reading: "き（く）", meaning: "音を耳で受け取る" },
-    { kanji: "読", reading: "よ（む）", meaning: "文字を目で理解する" },
-    { kanji: "書", reading: "か（く）", meaning: "文字を書く" },
-    { kanji: "算", reading: "さん", meaning: "計算すること" },
-    { kanji: "数", reading: "かず", meaning: "数をかぞえる" },
-    { kanji: "図", reading: "ず", meaning: "絵や地図" },
-    { kanji: "工", reading: "こう", meaning: "ものを作ること" },
-    { kanji: "作", reading: "つく（る）", meaning: "ものを製造する" },
-    { kanji: "画", reading: "が", meaning: "絵・映像" },
-    { kanji: "親", reading: "おや", meaning: "お父さん・お母さん" },
-    { kanji: "友", reading: "とも", meaning: "仲の良い人" },
-    { kanji: "兄", reading: "あに", meaning: "年上の男のきょうだい" },
+    { kanji: "春", reading: "はる", meaning: "桜が咲くあたたかい季節", example: "●になると桜が咲く。" },
+    { kanji: "夏", reading: "なつ", meaning: "暑い季節", example: "●休みに海へ行った。" },
+    { kanji: "秋", reading: "あき", meaning: "紅葉が美しい季節", example: "●になると葉が赤く染まる。" },
+    { kanji: "冬", reading: "ふゆ", meaning: "雪が降る寒い季節", example: "●は毎朝息が白くなる。" },
+    { kanji: "朝", reading: "あさ", meaning: "一日の始まりの時間", example: "●早く起きてジョギングした。" },
+    { kanji: "昼", reading: "ひる", meaning: "真ん中あたりの時間帯", example: "●ごはんにラーメンを食べた。" },
+    { kanji: "夜", reading: "よる", meaning: "暗くなった時間帯", example: "●に星がきれいに見えた。" },
+    { kanji: "晴", reading: "は（れ）", meaning: "雲がなく天気がよい", example: "●れた日は外で遊ぼう。" },
+    { kanji: "雲", reading: "くも", meaning: "空に浮かぶ白いもの", example: "大きな●が空に広がった。" },
+    { kanji: "風", reading: "かぜ", meaning: "空気が流れること", example: "強い●で帽子が飛んだ。" },
+    { kanji: "雪", reading: "ゆき", meaning: "白くふわふわ降るもの", example: "●が積もって庭が真っ白になった。" },
+    { kanji: "光", reading: "ひかり", meaning: "明るくするもの", example: "太陽の●で部屋が明るい。" },
+    { kanji: "色", reading: "いろ", meaning: "赤・青・黄などのこと", example: "虹はたくさんの●でできている。" },
+    { kanji: "海", reading: "うみ", meaning: "広い塩水の場所", example: "●に飛び込んで泳いだ。" },
+    { kanji: "池", reading: "いけ", meaning: "小さな水のたまり場", example: "公園の●でカモが泳いでいる。" },
+    { kanji: "岩", reading: "いわ", meaning: "大きくて硬い石", example: "大きな●によじ登った。" },
+    { kanji: "谷", reading: "たに", meaning: "山と山の間の低い場所", example: "●川に沿って歩いた。" },
+    { kanji: "原", reading: "はら", meaning: "広く平らな土地", example: "草●を馬が走る。" },
+    { kanji: "道", reading: "みち", meaning: "歩いたり車が通る通路", example: "この●をまっすぐ行くと駅がある。" },
+    { kanji: "町", reading: "まち", meaning: "店や家が集まる場所", example: "にぎやかな●を歩いた。" },
+    { kanji: "村", reading: "むら", meaning: "田舎の小さな集落", example: "山の中の小さな●に住んでいる。" },
+    { kanji: "語", reading: "ご", meaning: "言葉・言語のこと", example: "英●の授業で発表した。" },
+    { kanji: "話", reading: "はなし", meaning: "会話・物語のこと", example: "おもしろい●を聞かせてもらった。" },
+    { kanji: "聞", reading: "き（く）", meaning: "音を耳で受け取る", example: "先生の●こえる声で名前を呼ばれた。" },
+    { kanji: "読", reading: "よ（む）", meaning: "文字を目で理解する", example: "図書館で本を●んだ。" },
+    { kanji: "書", reading: "か（く）", meaning: "文字をペンで記す", example: "日記を毎日●いている。" },
+    { kanji: "算", reading: "さん", meaning: "計算・数学のこと", example: "●数の問題を解いた。" },
+    { kanji: "数", reading: "かず", meaning: "数えること・数字", example: "●をかぞえながら並んだ。" },
+    { kanji: "図", reading: "ず", meaning: "絵や地図のこと", example: "地●を見て道を確認した。" },
+    { kanji: "工", reading: "こう", meaning: "ものを作ること", example: "図●の時間に木工をした。" },
+    { kanji: "作", reading: "つく（る）", meaning: "ものを製造・制作する", example: "粘土で動物を●った。" },
+    { kanji: "画", reading: "が", meaning: "絵・映像のこと", example: "美術館で絵●を鑑賞した。" },
+    { kanji: "親", reading: "おや", meaning: "お父さん・お母さん", example: "●に感謝の手紙を書いた。" },
+    { kanji: "友", reading: "とも", meaning: "仲の良い人・友達", example: "●達と公園で遊んだ。" },
+    { kanji: "兄", reading: "あに", meaning: "年上の男のきょうだい", example: "●は中学生でサッカーが得意だ。" },
   ],
   3: [
-    { kanji: "反", reading: "はん", meaning: "逆らう・反対" },
-    { kanji: "表", reading: "ひょう・おもて", meaning: "外側・一覧" },
-    { kanji: "期", reading: "き", meaning: "時間の区切り" },
-    { kanji: "究", reading: "きゅう", meaning: "調べ尽くす" },
-    { kanji: "区", reading: "く", meaning: "区域・区分" },
-    { kanji: "苦", reading: "く", meaning: "辛い・苦しい" },
-    { kanji: "去", reading: "さ（る）", meaning: "去っていく" },
-    { kanji: "起", reading: "お（きる）", meaning: "立ち上がる・始まる" },
-    { kanji: "急", reading: "きゅう", meaning: "速い・突然" },
-    { kanji: "君", reading: "きみ", meaning: "あなた（呼びかけ）" },
-    { kanji: "係", reading: "かかり", meaning: "担当・つながり" },
-    { kanji: "薬", reading: "くすり", meaning: "病気を治すもの" },
-    { kanji: "荷", reading: "に", meaning: "運ぶ重さ・荷物" },
-    { kanji: "号", reading: "ごう", meaning: "番号・記号" },
-    { kanji: "根", reading: "ね", meaning: "植物の地下部分" },
-    { kanji: "祭", reading: "まつり", meaning: "お祭り・行事" },
-    { kanji: "使", reading: "つか（う）", meaning: "活用する" },
-    { kanji: "始", reading: "はじ（まる）", meaning: "スタートする" },
-    { kanji: "指", reading: "ゆび", meaning: "手の先の部分" },
-    { kanji: "歯", reading: "は", meaning: "口の中の硬いもの" },
-    { kanji: "詩", reading: "し", meaning: "言葉で書く文学" },
-    { kanji: "持", reading: "も（つ）", meaning: "手でつかむ" },
-    { kanji: "事", reading: "こと", meaning: "できごと" },
-    { kanji: "次", reading: "つぎ", meaning: "その後に来るもの" },
-    { kanji: "主", reading: "しゅ・ぬし", meaning: "中心・持ち主" },
-    { kanji: "守", reading: "まも（る）", meaning: "護る・遵守する" },
-    { kanji: "取", reading: "と（る）", meaning: "手に入れる" },
-    { kanji: "受", reading: "う（ける）", meaning: "もらう・引き受ける" },
-    { kanji: "想", reading: "そう", meaning: "考え・イメージ" },
-    { kanji: "追", reading: "お（う）", meaning: "後を追いかける" },
-    { kanji: "転", reading: "てん", meaning: "回る・変わる" },
-    { kanji: "度", reading: "ど", meaning: "回数・温度の単位" },
-    { kanji: "投", reading: "な（げる）", meaning: "物を投げる" },
-    { kanji: "島", reading: "しま", meaning: "海に囲まれた陸地" },
-    { kanji: "登", reading: "のぼ（る）", meaning: "高い所へ上がる" },
+    { kanji: "反", reading: "はん", meaning: "逆らう・反対のこと", example: "●対意見を言う。" },
+    { kanji: "表", reading: "ひょう・おもて", meaning: "外側・一覧のこと", example: "成績●を見て喜んだ。" },
+    { kanji: "期", reading: "き", meaning: "時間の区切り", example: "夏●休みが始まった。" },
+    { kanji: "究", reading: "きゅう", meaning: "調べ尽くすこと", example: "研●発表会で賞をとった。" },
+    { kanji: "区", reading: "く", meaning: "区域・区分のこと", example: "この●は静かな住宅地だ。" },
+    { kanji: "苦", reading: "く", meaning: "辛い・苦しいこと", example: "●手な野菜を頑張って食べた。" },
+    { kanji: "去", reading: "さ（る）", meaning: "離れて行くこと", example: "●年の夏は台風が多かった。" },
+    { kanji: "起", reading: "お（きる）", meaning: "立ち上がる・始まる", example: "朝六時に●きる。" },
+    { kanji: "急", reading: "きゅう", meaning: "速い・突然のこと", example: "●いで学校に向かった。" },
+    { kanji: "君", reading: "きみ", meaning: "あなた・呼びかけ", example: "●は本が好きだね。" },
+    { kanji: "係", reading: "かかり", meaning: "担当・つながり", example: "給食●を一週間やった。" },
+    { kanji: "薬", reading: "くすり", meaning: "病気や痛みを治すもの", example: "熱が出たので●を飲んだ。" },
+    { kanji: "荷", reading: "に", meaning: "運ぶ重さ・荷物", example: "重い●物を運ぶ。" },
+    { kanji: "号", reading: "ごう", meaning: "番号・記号のこと", example: "出席番●を呼ばれた。" },
+    { kanji: "根", reading: "ね", meaning: "植物の地下部分", example: "大根の●っこを引っこ抜いた。" },
+    { kanji: "祭", reading: "まつり", meaning: "お祭り・伝統行事", example: "夏●りで花火を見た。" },
+    { kanji: "使", reading: "つか（う）", meaning: "道具などを活用する", example: "はさみを●って紙を切った。" },
+    { kanji: "始", reading: "はじ（まる）", meaning: "スタートすること", example: "授業が●まる前に準備する。" },
+    { kanji: "指", reading: "ゆび", meaning: "手の先の細い部分", example: "●でピアノの鍵盤を押す。" },
+    { kanji: "歯", reading: "は", meaning: "口の中の硬いもの", example: "食後に●みがきをする。" },
+    { kanji: "詩", reading: "し", meaning: "言葉で書く文学作品", example: "春をテーマに●を書いた。" },
+    { kanji: "持", reading: "も（つ）", meaning: "手でつかむ・保つ", example: "バッグを両手で●つ。" },
+    { kanji: "事", reading: "こと", meaning: "できごと・物事", example: "大切な●を手帳に書く。" },
+    { kanji: "次", reading: "つぎ", meaning: "その後に来るもの", example: "●の駅で降りる。" },
+    { kanji: "主", reading: "しゅ・ぬし", meaning: "中心・持ち主のこと", example: "この店の●人公は料理が上手だ。" },
+    { kanji: "守", reading: "まも（る）", meaning: "護る・ルールを守る", example: "交通ルールを●る。" },
+    { kanji: "取", reading: "と（る）", meaning: "手に入れること", example: "りんごを木から●る。" },
+    { kanji: "受", reading: "う（ける）", meaning: "もらう・引き受ける", example: "プレゼントを●け取る。" },
+    { kanji: "想", reading: "そう", meaning: "考え・イメージのこと", example: "感●文を原稿用紙に書いた。" },
+    { kanji: "追", reading: "お（う）", meaning: "後を追いかけること", example: "ボールを●いかけた。" },
+    { kanji: "転", reading: "てん", meaning: "回る・場所が変わる", example: "自●車で学校に通う。" },
+    { kanji: "度", reading: "ど", meaning: "回数・温度などの単位", example: "今日の気温は三十●だ。" },
+    { kanji: "投", reading: "な（げる）", meaning: "物を投げること", example: "ピッチャーがボールを●げた。" },
+    { kanji: "島", reading: "しま", meaning: "海に囲まれた陸地", example: "南の●に旅行した。" },
+    { kanji: "登", reading: "のぼ（る）", meaning: "高い所へ上がること", example: "富士山に●った。" },
   ],
   4: [
-    { kanji: "愛", reading: "あい", meaning: "大切に思う気持ち" },
-    { kanji: "案", reading: "あん", meaning: "計画・アイデア" },
-    { kanji: "以", reading: "い", meaning: "〜より・〜で" },
-    { kanji: "位", reading: "い", meaning: "順位・場所" },
-    { kanji: "囲", reading: "かこ（む）", meaning: "周りを取り囲む" },
-    { kanji: "印", reading: "いん", meaning: "しるし・スタンプ" },
-    { kanji: "英", reading: "えい", meaning: "すぐれた・英語" },
-    { kanji: "栄", reading: "さか（える）", meaning: "繁栄する" },
-    { kanji: "塩", reading: "しお", meaning: "料理に使う調味料" },
-    { kanji: "岡", reading: "おか", meaning: "小さな丘" },
-    { kanji: "億", reading: "おく", meaning: "一億＝百百百百百百百百百百" },
-    { kanji: "加", reading: "くわ（える）", meaning: "付け加える" },
-    { kanji: "果", reading: "か・くだもの", meaning: "結果・果物" },
-    { kanji: "貨", reading: "か", meaning: "お金・商品" },
-    { kanji: "課", reading: "か", meaning: "分けた仕事・授業" },
-    { kanji: "芽", reading: "め", meaning: "植物の新しい部分" },
-    { kanji: "害", reading: "がい", meaning: "損害・被害" },
-    { kanji: "街", reading: "まち・がい", meaning: "店が並ぶ道" },
-    { kanji: "覚", reading: "おぼ（える）", meaning: "記憶する" },
-    { kanji: "型", reading: "かた", meaning: "形・モデル" },
-    { kanji: "径", reading: "けい", meaning: "直径・直径の線" },
-    { kanji: "景", reading: "けい", meaning: "風景・眺め" },
-    { kanji: "欠", reading: "か（ける）", meaning: "足りない" },
-    { kanji: "結", reading: "むす（ぶ）", meaning: "つなぐ・まとめる" },
-    { kanji: "建", reading: "た（てる）", meaning: "建物を作る" },
-    { kanji: "健", reading: "けん", meaning: "体が丈夫" },
-    { kanji: "験", reading: "けん", meaning: "試験・経験" },
-    { kanji: "固", reading: "かた（い）", meaning: "硬くて動かない" },
-    { kanji: "功", reading: "こう", meaning: "成功・手柄" },
-    { kanji: "候", reading: "こう", meaning: "気候・候補" },
-    { kanji: "航", reading: "こう", meaning: "船や飛行機で進む" },
-    { kanji: "告", reading: "こく", meaning: "知らせる" },
-    { kanji: "差", reading: "さ", meaning: "違い・差分" },
-    { kanji: "菜", reading: "な", meaning: "野菜・おかず" },
-    { kanji: "最", reading: "さい", meaning: "いちばん" },
+    { kanji: "愛", reading: "あい", meaning: "大切に思う深い気持ち", example: "ペットへの●情は深い。" },
+    { kanji: "案", reading: "あん", meaning: "計画・アイデアのこと", example: "新しい●を出し合った。" },
+    { kanji: "以", reading: "い", meaning: "〜より・〜でのこと", example: "十歳●上の子が参加できる。" },
+    { kanji: "位", reading: "い", meaning: "順位・場所のこと", example: "マラソンで三●になった。" },
+    { kanji: "囲", reading: "かこ（む）", meaning: "周りを取り囲むこと", example: "みんなでテーブルを●んだ。" },
+    { kanji: "印", reading: "いん", meaning: "しるし・スタンプのこと", example: "スタンプ●を押した。" },
+    { kanji: "英", reading: "えい", meaning: "すぐれた・英語のこと", example: "●語の本を読む。" },
+    { kanji: "栄", reading: "さか（える）", meaning: "繁栄・豊かになること", example: "昔この町は●えていた。" },
+    { kanji: "塩", reading: "しお", meaning: "料理に使う白い調味料", example: "スープに●を加える。" },
+    { kanji: "億", reading: "おく", meaning: "一億＝一万の一万倍", example: "百●円の宝くじが当たった。" },
+    { kanji: "加", reading: "くわ（える）", meaning: "付け加えること", example: "砂糖を少し●える。" },
+    { kanji: "果", reading: "か・くだもの", meaning: "結果・果物のこと", example: "練習の成●が出た。" },
+    { kanji: "貨", reading: "か", meaning: "お金・商品のこと", example: "外国の硬●を集めている。" },
+    { kanji: "課", reading: "か", meaning: "仕事の分野・授業", example: "宿題は国語の●題だ。" },
+    { kanji: "芽", reading: "め", meaning: "植物の新しい部分", example: "春になって球根から●が出た。" },
+    { kanji: "害", reading: "がい", meaning: "損害・被害のこと", example: "台風で農作物に被●が出た。" },
+    { kanji: "街", reading: "まち・がい", meaning: "店が並ぶにぎやかな道", example: "商店●でショッピングした。" },
+    { kanji: "覚", reading: "おぼ（える）", meaning: "記憶すること", example: "九九を全部●えた。" },
+    { kanji: "型", reading: "かた", meaning: "形・モデルのこと", example: "最新●のスマホを買った。" },
+    { kanji: "景", reading: "けい", meaning: "風景・眺めのこと", example: "山からの●色がすばらしい。" },
+    { kanji: "欠", reading: "か（ける）", meaning: "足りない・ひびが入る", example: "お皿が●けてしまった。" },
+    { kanji: "結", reading: "むす（ぶ）", meaning: "つなぐ・まとめること", example: "リボンを●んでプレゼントした。" },
+    { kanji: "建", reading: "た（てる）", meaning: "建物を作ること", example: "新しい図書館が●てられた。" },
+    { kanji: "健", reading: "けん", meaning: "体が丈夫なこと", example: "●康のために毎日歩く。" },
+    { kanji: "験", reading: "けん", meaning: "試験・経験のこと", example: "試●に向けて勉強する。" },
+    { kanji: "固", reading: "かた（い）", meaning: "硬くて動かないこと", example: "●いパンを水で柔らかくした。" },
+    { kanji: "功", reading: "こう", meaning: "成功・手柄のこと", example: "努力が実り成●した。" },
+    { kanji: "航", reading: "こう", meaning: "船や飛行機で進むこと", example: "飛行機で太平洋を横●した。" },
+    { kanji: "告", reading: "こく", meaning: "知らせること", example: "先生が大切なことを報●した。" },
+    { kanji: "差", reading: "さ", meaning: "違い・差分のこと", example: "二チームの点●は三点だった。" },
+    { kanji: "菜", reading: "な", meaning: "野菜・おかずのこと", example: "お弁当に野●を入れる。" },
+    { kanji: "最", reading: "さい", meaning: "いちばんのこと", example: "●高の景色を見た。" },
+    { kanji: "敗", reading: "やぶ（れる）", meaning: "負けること", example: "試合に●れたが全力を出した。" },
+    { kanji: "費", reading: "ひ", meaning: "使うお金・費用のこと", example: "旅行の交通●を計算した。" },
+    { kanji: "望", reading: "のぞ（む）", meaning: "願い・希望すること", example: "将来の夢を希●する。" },
   ],
   5: [
-    { kanji: "圧", reading: "あつ", meaning: "押さえる力" },
-    { kanji: "移", reading: "うつ（る）", meaning: "場所が変わる" },
-    { kanji: "因", reading: "いん", meaning: "原因・理由" },
-    { kanji: "永", reading: "えい", meaning: "ずっと続く" },
-    { kanji: "営", reading: "えい", meaning: "経営する・運営" },
-    { kanji: "衛", reading: "えい", meaning: "守る・衛星" },
-    { kanji: "易", reading: "い", meaning: "簡単・取引" },
-    { kanji: "益", reading: "えき", meaning: "利益・役に立つ" },
-    { kanji: "液", reading: "えき", meaning: "液体・汁" },
-    { kanji: "演", reading: "えん", meaning: "演じる・公演" },
-    { kanji: "応", reading: "おう", meaning: "答える・対応" },
-    { kanji: "往", reading: "おう", meaning: "行く・往復" },
-    { kanji: "恩", reading: "おん", meaning: "お世話・恩返し" },
-    { kanji: "仮", reading: "かり", meaning: "仮の・一時的" },
-    { kanji: "価", reading: "か", meaning: "値段・価値" },
-    { kanji: "可", reading: "か", meaning: "できる・許す" },
-    { kanji: "快", reading: "かい", meaning: "気持ちいい・快適" },
-    { kanji: "解", reading: "と（く）", meaning: "解く・理解する" },
-    { kanji: "格", reading: "かく", meaning: "品質・資格" },
-    { kanji: "確", reading: "かく", meaning: "確かめる・確実" },
-    { kanji: "額", reading: "がく", meaning: "金額・額縁" },
-    { kanji: "刊", reading: "かん", meaning: "発行する・本" },
-    { kanji: "幹", reading: "かん", meaning: "木の幹・中心" },
-    { kanji: "慣", reading: "な（れる）", meaning: "慣れ親しむ" },
-    { kanji: "眼", reading: "がん", meaning: "目・眼球" },
-    { kanji: "基", reading: "き", meaning: "基本・土台" },
-    { kanji: "寄", reading: "よ（る）", meaning: "近づく・寄付" },
-    { kanji: "規", reading: "き", meaning: "ルール・規則" },
-    { kanji: "技", reading: "わざ", meaning: "技術・スキル" },
-    { kanji: "義", reading: "ぎ", meaning: "正しい道・意味" },
-    { kanji: "逆", reading: "ぎゃく", meaning: "反対・逆向き" },
-    { kanji: "久", reading: "ひさ（しい）", meaning: "長い時間" },
-    { kanji: "旧", reading: "きゅう", meaning: "古い・昔の" },
-    { kanji: "居", reading: "い（る）", meaning: "そこにいる" },
-    { kanji: "許", reading: "ゆる（す）", meaning: "許可する" },
+    { kanji: "圧", reading: "あつ", meaning: "押さえる力のこと", example: "気●が下がると雨が降りやすい。" },
+    { kanji: "移", reading: "うつ（る）", meaning: "場所や状態が変わること", example: "新しい学校に転●した。" },
+    { kanji: "因", reading: "いん", meaning: "原因・理由のこと", example: "火事の原●を調べた。" },
+    { kanji: "永", reading: "えい", meaning: "ずっと続くこと", example: "●久に友達でいよう。" },
+    { kanji: "営", reading: "えい", meaning: "経営する・運営すること", example: "家族で食堂を●んでいる。" },
+    { kanji: "衛", reading: "えい", meaning: "守る・人工衛星のこと", example: "人工●星から地球を観測する。" },
+    { kanji: "益", reading: "えき", meaning: "利益・役に立つこと", example: "社会に●する仕事をしたい。" },
+    { kanji: "液", reading: "えき", meaning: "液体・汁のこと", example: "消毒●で手を清潔にした。" },
+    { kanji: "演", reading: "えん", meaning: "演じる・公演すること", example: "舞台で主役を●じた。" },
+    { kanji: "応", reading: "おう", meaning: "答える・対応すること", example: "緊急の事態に対●する。" },
+    { kanji: "恩", reading: "おん", meaning: "お世話・恩義のこと", example: "先生への●返しに手紙を書いた。" },
+    { kanji: "価", reading: "か", meaning: "値段・価値のこと", example: "この絵の評●は高い。" },
+    { kanji: "可", reading: "か", meaning: "できる・許すこと", example: "参加●能な人は手を挙げて。" },
+    { kanji: "快", reading: "かい", meaning: "気持ちいい・快適なこと", example: "●晴れの空の下で遊んだ。" },
+    { kanji: "解", reading: "と（く）", meaning: "解く・理解すること", example: "難しい問題を●いた。" },
+    { kanji: "格", reading: "かく", meaning: "品質・資格のこと", example: "試験に合●した。" },
+    { kanji: "確", reading: "かく", meaning: "確かめる・確実なこと", example: "答えを●認してから提出した。" },
+    { kanji: "額", reading: "がく", meaning: "金額・額縁のこと", example: "合計金●を計算する。" },
+    { kanji: "幹", reading: "かん", meaning: "木の幹・中心部分", example: "太い●のある大木に触れた。" },
+    { kanji: "慣", reading: "な（れる）", meaning: "慣れ親しむこと", example: "新しい生活に●れてきた。" },
+    { kanji: "基", reading: "き", meaning: "基本・土台のこと", example: "算数の●礎をしっかり学ぶ。" },
+    { kanji: "寄", reading: "よ（る）", meaning: "近づく・寄付すること", example: "帰りにコンビニに●った。" },
+    { kanji: "規", reading: "き", meaning: "ルール・規則のこと", example: "学校の●則を守る。" },
+    { kanji: "技", reading: "わざ", meaning: "技術・スキルのこと", example: "体操の●を練習した。" },
+    { kanji: "義", reading: "ぎ", meaning: "正しい道・意味のこと", example: "正●のために行動する。" },
+    { kanji: "逆", reading: "ぎゃく", meaning: "反対・逆向きのこと", example: "●方向に歩いてしまった。" },
+    { kanji: "久", reading: "ひさ（しい）", meaning: "長い時間がたつこと", example: "●しぶりに旧友に会った。" },
+    { kanji: "居", reading: "い（る）", meaning: "そこにいること", example: "家に●ると電話が鳴った。" },
+    { kanji: "許", reading: "ゆる（す）", meaning: "許可すること", example: "先生が外出を●してくれた。" },
+    { kanji: "境", reading: "さかい", meaning: "区切り・境界のこと", example: "県●を越えて旅した。" },
+    { kanji: "興", reading: "きょう", meaning: "おもしろさ・興味のこと", example: "科学に●味を持つ。" },
+    { kanji: "限", reading: "かぎ（る）", meaning: "限界・制限のこと", example: "時間に●りがあるので急ぐ。" },
+    { kanji: "護", reading: "ご", meaning: "守ること・保護のこと", example: "環境保●について学んだ。" },
+    { kanji: "効", reading: "こう", meaning: "効果・役に立つこと", example: "薬が●いて熱が下がった。" },
+    { kanji: "講", reading: "こう", meaning: "講義・話すこと", example: "専門家の●演を聴いた。" },
   ],
   6: [
-    { kanji: "異", reading: "こと（なる）", meaning: "違う・異なる" },
-    { kanji: "遺", reading: "い", meaning: "残された・遺産" },
-    { kanji: "域", reading: "いき", meaning: "区域・範囲" },
-    { kanji: "宇", reading: "う", meaning: "宇宙・広い空間" },
-    { kanji: "映", reading: "うつ（る）", meaning: "映像・映す" },
-    { kanji: "延", reading: "のば（す）", meaning: "延長する" },
-    { kanji: "沿", reading: "そ（う）", meaning: "沿って進む" },
-    { kanji: "我", reading: "わ", meaning: "自分自身" },
-    { kanji: "灰", reading: "はい", meaning: "燃えた後のもの" },
-    { kanji: "拡", reading: "かく", meaning: "広げる" },
-    { kanji: "革", reading: "かく", meaning: "皮・変革" },
-    { kanji: "閣", reading: "かく", meaning: "内閣・建物" },
-    { kanji: "割", reading: "わ（る）", meaning: "分ける・割合" },
-    { kanji: "株", reading: "かぶ", meaning: "株式・切り株" },
-    { kanji: "干", reading: "ほ（す）", meaning: "乾かす・干す" },
-    { kanji: "巻", reading: "ま（く）", meaning: "巻く・冊" },
-    { kanji: "看", reading: "かん", meaning: "見守る・看護" },
-    { kanji: "簡", reading: "かん", meaning: "簡単・シンプル" },
-    { kanji: "危", reading: "あぶ（ない）", meaning: "危険な状態" },
-    { kanji: "机", reading: "つくえ", meaning: "勉強用の台" },
-    { kanji: "揮", reading: "き", meaning: "振るう・指揮" },
-    { kanji: "貴", reading: "たか（い）", meaning: "価値が高い" },
-    { kanji: "疑", reading: "うたが（う）", meaning: "疑問に思う" },
-    { kanji: "吸", reading: "す（う）", meaning: "空気を吸う" },
-    { kanji: "供", reading: "そな（える）", meaning: "提供する・子供" },
-    { kanji: "胸", reading: "むね", meaning: "体の前側・心" },
-    { kanji: "郷", reading: "きょう", meaning: "故郷・ふるさと" },
-    { kanji: "勤", reading: "つと（める）", meaning: "仕事をする" },
-    { kanji: "筋", reading: "すじ", meaning: "筋肉・道筋" },
-    { kanji: "系", reading: "けい", meaning: "つながり・系列" },
-    { kanji: "敬", reading: "うやま（う）", meaning: "尊敬する" },
-    { kanji: "警", reading: "けい", meaning: "警告・警察" },
-    { kanji: "劇", reading: "げき", meaning: "演劇・激しい" },
-    { kanji: "激", reading: "はげ（しい）", meaning: "非常に強い" },
-    { kanji: "穴", reading: "あな", meaning: "くぼんだ空間" },
+    { kanji: "異", reading: "こと（なる）", meaning: "違う・異なること", example: "二つの意見が●なる。" },
+    { kanji: "遺", reading: "い", meaning: "残された・遺産のこと", example: "世界文化●産を訪れた。" },
+    { kanji: "域", reading: "いき", meaning: "区域・範囲のこと", example: "この地●は雪が多い。" },
+    { kanji: "宇", reading: "う", meaning: "宇宙・広い空間のこと", example: "●宙飛行士に憧れる。" },
+    { kanji: "映", reading: "うつ（る）", meaning: "映像・映すこと", example: "スクリーンに映●を映した。" },
+    { kanji: "延", reading: "のば（す）", meaning: "延長すること", example: "雨で試合が●期された。" },
+    { kanji: "沿", reading: "そ（う）", meaning: "沿って進むこと", example: "川●いに自転車で走った。" },
+    { kanji: "我", reading: "わ", meaning: "自分自身のこと", example: "●慢して最後まで走った。" },
+    { kanji: "灰", reading: "はい", meaning: "燃えた後に残るもの", example: "火山●が空を覆った。" },
+    { kanji: "拡", reading: "かく", meaning: "広げること", example: "地図を●大して見た。" },
+    { kanji: "革", reading: "かく", meaning: "変えること・皮のこと", example: "社会を改●する運動が起きた。" },
+    { kanji: "閣", reading: "かく", meaning: "内閣・高い建物のこと", example: "新しい内●が発足した。" },
+    { kanji: "割", reading: "わ（る）", meaning: "分けること・割合", example: "ケーキを六●した。" },
+    { kanji: "干", reading: "ほ（す）", meaning: "乾かすこと", example: "洗濯物を外に●した。" },
+    { kanji: "巻", reading: "ま（く）", meaning: "巻くこと・冊のこと", example: "包帯を足首に●いた。" },
+    { kanji: "看", reading: "かん", meaning: "見守ること・看護のこと", example: "●護師が患者を助けた。" },
+    { kanji: "簡", reading: "かん", meaning: "簡単・シンプルなこと", example: "●単な問題から始めた。" },
+    { kanji: "危", reading: "あぶ（ない）", meaning: "危険な状態のこと", example: "●険なので近づかないで。" },
+    { kanji: "机", reading: "つくえ", meaning: "勉強や作業用の台", example: "●の上を片付けた。" },
+    { kanji: "揮", reading: "き", meaning: "振るう・指揮すること", example: "指●者がタクトを振った。" },
+    { kanji: "貴", reading: "たか（い）", meaning: "価値がとても高いこと", example: "●重な体験ができた。" },
+    { kanji: "疑", reading: "うたが（う）", meaning: "疑問に思うこと", example: "その話を●わしく思った。" },
+    { kanji: "吸", reading: "す（う）", meaning: "空気などを吸うこと", example: "深呼●して落ち着いた。" },
+    { kanji: "供", reading: "そな（える）", meaning: "提供すること・子供", example: "神様にお●えをした。" },
+    { kanji: "胸", reading: "むね", meaning: "体の前側・心のこと", example: "発表前は●がドキドキした。" },
+    { kanji: "郷", reading: "きょう", meaning: "故郷・ふるさとのこと", example: "故●の味を懐かしむ。" },
+    { kanji: "勤", reading: "つと（める）", meaning: "仕事をすること", example: "父は会社に●めている。" },
+    { kanji: "筋", reading: "すじ", meaning: "筋肉・道筋のこと", example: "●トレで体を鍛える。" },
+    { kanji: "系", reading: "けい", meaning: "つながり・系列のこと", example: "太陽●の惑星を調べた。" },
+    { kanji: "敬", reading: "うやま（う）", meaning: "尊敬すること", example: "お年寄りを●う気持ちを持つ。" },
+    { kanji: "警", reading: "けい", meaning: "警告・警察のこと", example: "●察官が事故を処理した。" },
+    { kanji: "劇", reading: "げき", meaning: "演劇・激しいこと", example: "学芸会で●を上演した。" },
+    { kanji: "激", reading: "はげ（しい）", meaning: "非常に強いこと", example: "●しい雨が降り続いた。" },
+    { kanji: "穴", reading: "あな", meaning: "くぼんだ空間のこと", example: "地面に深い●が開いていた。" },
+    { kanji: "絹", reading: "きぬ", meaning: "なめらかで高級な布", example: "●のスカーフを首に巻いた。" },
   ]
 };
+
+// ===== 状態 =====
 
 // ===== 状態 =====
 let selectedLevel = null;
@@ -779,108 +866,21 @@ let currentQuestions = [];
 let currentIndex = 0;
 let correctCount = 0;
 let wrongList = [];
-let isDrawing = false;
-let lastX = 0, lastY = 0;
-let hasDrawn = false;
+let hasInput = false;
 let isSubmitting = false;
-let canvasInitialized = false;
 
-// ===== キャンバス =====
-let canvas, ctx;
-
-function initCanvas() {
-  canvas = document.getElementById('draw-canvas');
-  const wrap = document.getElementById('canvas-wrap');
-  const w = wrap.clientWidth;
-  const h = Math.round(w * 0.8);
-  canvas.width = w;
-  canvas.height = h;
-  canvas.style.height = h + 'px';
-  ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, w, h);
-  drawGuide(w, h);
-  ctx.strokeStyle = '#2d2016';
-  ctx.lineWidth = Math.max(4, w / 60);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  // PointerEvent（Apple Pencil / タッチ / マウス 統合）
-  if (!canvasInitialized) {
-    canvas.style.touchAction = 'none';
-    canvas.addEventListener('pointerdown', e => { e.preventDefault(); startDraw(e); });
-    canvas.addEventListener('pointermove', e => { e.preventDefault(); draw(e); });
-    canvas.addEventListener('pointerup', endDraw);
-    canvas.addEventListener('pointercancel', endDraw);
-    canvas.addEventListener('pointerleave', endDraw);
-    canvasInitialized = true;
-  }
+// ===== テキスト入力 =====
+function onInputChange() {
+  const val = document.getElementById('kanji-input').value.trim();
+  hasInput = val.length > 0;
+  document.getElementById('submit-btn').disabled = !hasInput;
 }
 
-function drawGuide(w, h) {
-  const guide = document.getElementById('canvas-guide');
-  guide.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  guide.setAttribute('width', w);
-  guide.setAttribute('height', h);
-  const cx = w / 2, cy = h / 2;
-  const strokeColor = '#e8ddd0';
-  guide.innerHTML = `
-    <line x1="${cx}" y1="0" x2="${cx}" y2="${h}" stroke="${strokeColor}" stroke-width="1" stroke-dasharray="6,4"/>
-    <line x1="0" y1="${cy}" x2="${w}" y2="${cy}" stroke="${strokeColor}" stroke-width="1" stroke-dasharray="6,4"/>
-    <line x1="0" y1="0" x2="${w}" y2="${h}" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="4,8"/>
-    <line x1="${w}" y1="0" x2="0" y2="${h}" stroke="${strokeColor}" stroke-width="0.8" stroke-dasharray="4,8"/>
-    <rect x="1" y="1" width="${w-2}" height="${h-2}" fill="none" stroke="${strokeColor}" stroke-width="2" rx="17"/>
-  `;
-}
-
-function getPos(e) {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  return {
-    x: (e.clientX - rect.left) * scaleX,
-    y: (e.clientY - rect.top) * scaleY
-  };
-}
-
-function getPressure(e) {
-  // Apple Pencilは pressure が 0〜1 で返る
-  if (e.pointerType === 'pen' && e.pressure > 0) return e.pressure;
-  return 0.5;
-}
-
-function startDraw(e) {
-  isDrawing = true;
-  canvas.setPointerCapture(e.pointerId);
-  const pos = getPos(e);
-  lastX = pos.x; lastY = pos.y;
-  const pressure = getPressure(e);
-  ctx.lineWidth = Math.max(3, (canvas.width / 55) * (0.6 + pressure * 0.8));
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, ctx.lineWidth / 2, 0, Math.PI * 2);
-  ctx.fillStyle = '#2d2016';
-  ctx.fill();
-  hasDrawn = true;
-}
-
-function draw(e) {
-  if (!isDrawing) return;
-  const pos = getPos(e);
-  const pressure = getPressure(e);
-  ctx.lineWidth = Math.max(3, (canvas.width / 55) * (0.6 + pressure * 0.8));
-  ctx.beginPath();
-  ctx.moveTo(lastX, lastY);
-  ctx.lineTo(pos.x, pos.y);
-  ctx.stroke();
-  lastX = pos.x; lastY = pos.y;
-}
-
-function endDraw() { isDrawing = false; }
-
-function clearCanvas() {
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  hasDrawn = false;
+function clearInput() {
+  document.getElementById('kanji-input').value = '';
+  hasInput = false;
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('kanji-input').focus();
 }
 
 // ===== レベル選択 =====
@@ -903,31 +903,49 @@ function startQuiz() {
 
   document.getElementById('header-level-label').textContent = selectedLevel + '年生';
   showScreen('quiz-screen');
-  initCanvas();
   showQuestion();
+}
+
+function maskKanji(text, kanji) {
+  // 答えの漢字を●に置換（1文字ずつ対応）
+  return text.split('').map(ch => {
+    if (ch === kanji) return '<span class="masked">●</span>';
+    return ch;
+  }).join('');
 }
 
 function showQuestion() {
   const q = currentQuestions[currentIndex];
   document.getElementById('question-reading').textContent = q.reading;
-  document.getElementById('question-meaning').textContent = q.meaning;
+  // meaning 中の答え漢字をマスク
+  document.getElementById('question-meaning').innerHTML = maskKanji(q.meaning, q.kanji);
   document.getElementById('progress-text').textContent = (currentIndex + 1) + ' / 10';
   document.getElementById('progress-bar').style.width = ((currentIndex + 1) / 10 * 100) + '%';
-  clearCanvas();
-  hasDrawn = false;
+
+  // 例文表示（答えをマスク）
+  if (q.example) {
+    document.getElementById('question-example').style.display = 'block';
+    document.getElementById('question-example-text').innerHTML = maskKanji(q.example, q.kanji);
+  } else {
+    document.getElementById('question-example').style.display = 'none';
+  }
+
+  clearInput();
+  hasInput = false;
   isSubmitting = false;
-  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'none';
+  setTimeout(() => { const inp = document.getElementById('kanji-input'); if(inp) inp.focus(); }, 100);
 }
 
 // ===== 答え送信 =====
 async function submitAnswer() {
-  if (!hasDrawn || isSubmitting) return;
+  if (!hasInput || isSubmitting) return;
   isSubmitting = true;
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'flex';
 
-  const imageData = canvas.toDataURL('image/png').split(',')[1];
+  const inputText = document.getElementById('kanji-input').value.trim();
   const q = currentQuestions[currentIndex];
 
   try {
@@ -936,50 +954,36 @@ async function submitAnswer() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 200,
+        max_tokens: 150,
         messages: [{
           role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: 'image/png', data: imageData }
-            },
-            {
-              type: 'text',
-              text: `この手書きの画像を見て、漢字の正誤判定をしてください。
-
-問題: 「${q.reading}」という読みの漢字を書く問題です。
-正解の漢字: 「${q.kanji}」
-
-画像に書かれた手書きの漢字を読み取り、「${q.kanji}」として判定できるかどうか判断してください。
-多少形が崩れていても、漢字として認識できれば正解とします。
-
-以下のJSON形式のみで回答してください（他の文は不要）:
-{"correct": true/false, "recognized": "認識した文字", "comment": "一言コメント（日本語・短く）"}`
-            }
-          ]
+          content: [{
+            type: 'text',
+            text: `漢字の正誤判定をしてください。\n読み:「${q.reading}」 正解:「${q.kanji}」 回答:「${inputText}」\nJSON形式のみ: {"correct": true/false, "comment": "短い日本語コメント"}`
+          }]
         }]
       })
     });
 
     if (!response.ok) {
       const errJson = await response.json().catch(() => ({}));
-      throw new Error(errJson?.error?.message || 'API error ' + response.status);
+      throw new Error(errJson?.error?.message || 'HTTP ' + response.status);
     }
     const data = await response.json();
     const text = data.content?.[0]?.text?.trim() || '';
     let result;
     try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      const jsonMatch = text.match(/\{[\s\S]*?\}/);
       result = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     } catch {
-      result = { correct: false, recognized: '?', comment: '読み取れませんでした' };
+      result = { correct: inputText === q.kanji, comment: inputText === q.kanji ? 'せいかい！' : 'もう一度' };
     }
-
+    result.recognized = inputText;
     showResult(result);
   } catch (err) {
     console.error('API Error:', err);
-    showResult({ correct: false, recognized: '?', comment: '通信エラー。スキップします。' });
+    const correct = inputText === q.kanji;
+    showResult({ correct, recognized: inputText, comment: correct ? 'せいかい！' : `正解は「${q.kanji}」` });
   }
 }
 
