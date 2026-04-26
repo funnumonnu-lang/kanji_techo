@@ -207,47 +207,47 @@
     .scribble-wrap {
       position: relative;
       background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 2px 12px rgba(45,32,22,0.08);
+      border-radius: 24px;
+      box-shadow: 0 2px 16px rgba(45,32,22,0.10);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 18px 16px 14px;
-      gap: 10px;
-      min-height: 160px;
+      padding: 24px 20px 18px;
+      gap: 12px;
+      min-height: 280px;
     }
     /* 漢字練習帳の格子ガイド（背景） */
     .scribble-wrap::before {
       content: '';
       position: absolute;
-      inset: 12px;
+      inset: 16px;
       border: 2px solid #e8ddd0;
-      border-radius: 10px;
+      border-radius: 14px;
       pointer-events: none;
     }
     .scribble-wrap::after {
       content: '';
       position: absolute;
-      top: 12px; bottom: 12px;
+      top: 16px; bottom: 16px;
       left: 50%; width: 0;
-      border-left: 1px dashed #e8ddd0;
+      border-left: 1.5px dashed #e8ddd0;
       pointer-events: none;
     }
     .scribble-hline {
       position: absolute;
-      left: 12px; right: 12px;
+      left: 16px; right: 16px;
       top: 50%; height: 0;
-      border-top: 1px dashed #e8ddd0;
+      border-top: 1.5px dashed #e8ddd0;
       pointer-events: none;
     }
     #kanji-input {
       position: relative;
       width: 100%;
-      max-width: 200px;
+      max-width: 280px;
       text-align: center;
-      font-size: 72px;
+      font-size: 130px;
       font-weight: 900;
       font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
       color: #2d2016;
@@ -262,7 +262,7 @@
     }
     #kanji-input::placeholder {
       color: #d4c4b0;
-      font-size: 48px;
+      font-size: 90px;
     }
     .pencil-hint {
       font-size: 12px; color: #b5a08a;
@@ -492,6 +492,119 @@
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    /* ===== 記録画面 ===== */
+    #stats-screen {
+      align-items: center;
+      gap: 18px;
+      padding: 28px 20px 40px;
+    }
+    .stats-header {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .stats-title { font-size: 20px; font-weight: 900; color: #2d2016; }
+    .stats-close {
+      background: #f3ede6; border: none; border-radius: 50%;
+      width: 36px; height: 36px; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .stats-summary {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px; width: 100%;
+    }
+    .stat-box {
+      background: #fff; border-radius: 16px;
+      padding: 14px 8px; text-align: center;
+      box-shadow: 0 2px 8px rgba(45,32,22,0.07);
+    }
+    .stat-box-num { font-size: 26px; font-weight: 900; color: #c0561e; }
+    .stat-box-label { font-size: 10px; color: #b5a08a; font-weight: 700; margin-top: 2px; }
+    .history-section { width: 100%; }
+    .history-title {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+      background: #fff; border-radius: 14px;
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 6px rgba(45,32,22,0.06);
+    }
+    .history-lv {
+      background: #fdf0e8; color: #c0561e;
+      font-size: 11px; font-weight: 900;
+      border-radius: 8px; padding: 4px 8px;
+      min-width: 40px; text-align: center;
+    }
+    .history-score { font-size: 15px; font-weight: 900; color: #2d2016; margin-left: auto; }
+    .history-date { font-size: 11px; color: #b5a08a; }
+
+    /* 苦手リスト */
+    .weak-section { width: 100%; }
+    .weak-title {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .weak-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .weak-chip {
+      background: #fff; border: 2px solid #fde8dd;
+      border-radius: 12px; padding: 8px 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .weak-chip-kanji { font-size: 20px; font-weight: 900; color: #2d2016; }
+    .weak-chip-reading { font-size: 10px; color: #b5a08a; }
+    .weak-chip-count { font-size: 10px; color: #c0561e; font-weight: 700; }
+    .weak-drill-btn {
+      width: 100%;
+      background: #7c3d10;
+      border: none; border-radius: 16px;
+      padding: 16px; font-size: 15px; font-weight: 900;
+      color: #fff; cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.06em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .weak-drill-btn:active { opacity: 0.85; }
+    .weak-drill-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+    .clear-stats-btn {
+      background: none; border: 1px solid #e8ddd0;
+      border-radius: 12px; padding: 10px 18px;
+      font-size: 12px; color: #b5a08a; font-weight: 700;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    /* ホーム下部ボタン群 */
+    .home-action-row {
+      display: flex; gap: 10px; width: 100%;
+    }
+    .stats-open-btn {
+      flex: 1;
+      background: #fff; border: 2px solid #e8ddd0;
+      border-radius: 16px; padding: 14px 8px;
+      font-size: 13px; font-weight: 700; color: #8b7355;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background 0.15s;
+    }
+    .stats-open-btn:active { background: #f3ede6; }
+    .stats-open-btn .btn-icon { font-size: 22px; }
+    .weak-open-btn {
+      flex: 1;
+      background: #fff5f0; border: 2px solid #f5c4a8;
+      border-radius: 16px; padding: 14px 8px;
+      font-size: 13px; font-weight: 700; color: #c0561e;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background 0.15s;
+    }
+    .weak-open-btn:active { background: #fde8dd; }
+    .weak-open-btn .btn-icon { font-size: 22px; }
+    .weak-open-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sub { font-size: 10px; color: #b5a08a; font-weight: 500; }
+    .weak-open-btn .btn-sub { color: #e8874a; }
+
   </style>
 </head>
 <body>
@@ -538,6 +651,18 @@
     <button class="start-btn" id="start-btn" disabled onclick="startQuiz()">
       はじめる →
     </button>
+    <div class="home-action-row">
+      <button class="stats-open-btn" onclick="showScreen('stats-screen'); renderStats()">
+        <span class="btn-icon">📊</span>
+        <span>学習きろく</span>
+        <span class="btn-sub" id="home-stats-sub">まだありません</span>
+      </button>
+      <button class="weak-open-btn disabled" id="home-weak-btn">
+        <span class="btn-icon">🔥</span>
+        <span>苦手ドリル</span>
+        <span class="btn-sub" id="home-weak-sub">苦手漢字がまだありません</span>
+      </button>
+    </div>
   </div>
 
   <!-- ===== クイズ画面 ===== -->
@@ -626,7 +751,42 @@
       <div class="wrong-list" id="wrong-list"></div>
     </div>
     <button class="retry-btn" onclick="retryQuiz()">もう一度やる 🔄</button>
+    <button class="weak-drill-btn disabled" id="result-weak-btn" style="margin-top:0">🔥 苦手ドリルをはじめる</button>
     <button class="home-btn" onclick="goHome()">レベル選択へ</button>
+  </div>
+
+  <!-- ===== 記録画面 ===== -->
+  <div id="stats-screen" class="screen">
+    <div class="stats-header">
+      <span class="stats-title">📊 学習きろく</span>
+      <button class="stats-close" onclick="showScreen('start-screen'); updateHomeButtons()">✕</button>
+    </div>
+    <div class="stats-summary">
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-total">0</div>
+        <div class="stat-box-label">ドリル回数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-correct">0</div>
+        <div class="stat-box-label">せいかい数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-rate">0%</div>
+        <div class="stat-box-label">せいかい率</div>
+      </div>
+    </div>
+    <div class="weak-section">
+      <div class="weak-title">苦手な漢字</div>
+      <div class="weak-grid" id="stats-weak-grid"></div>
+      <div id="stats-weak-empty" style="font-size:13px;color:#b5a08a;display:none">苦手な漢字はありません 🎉</div>
+      <br>
+      <button class="weak-drill-btn disabled" id="stats-weak-drill-btn">🔥 苦手ドリルをはじめる</button>
+    </div>
+    <div class="history-section">
+      <div class="history-title">さいきんの記録（最大20件）</div>
+      <div class="history-list" id="stats-history-list"></div>
+    </div>
+    <button class="clear-stats-btn" onclick="if(confirm('記録をすべて消しますか？'))clearAllStats()">記録をリセット</button>
   </div>
 
 </div>
@@ -858,7 +1018,13 @@ const KANJI_DATA = {
   ]
 };
 
-// ===== 状態 =====
+// ===== localStorage =====
+const STORAGE_KEY = 'kanji_techo_v1';
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { history: [], weakWords: {} }; }
+  catch { return { history: [], weakWords: {} }; }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
 
 // ===== 状態 =====
 let selectedLevel = null;
@@ -868,6 +1034,7 @@ let correctCount = 0;
 let wrongList = [];
 let hasInput = false;
 let isSubmitting = false;
+let isWeakDrill = false;
 
 // ===== テキスト入力 =====
 function onInputChange() {
@@ -894,6 +1061,7 @@ function selectLevel(level) {
 
 // ===== クイズ開始 =====
 function startQuiz() {
+  isWeakDrill = false;
   const all = KANJI_DATA[selectedLevel];
   const shuffled = [...all].sort(() => Math.random() - 0.5);
   currentQuestions = shuffled.slice(0, 10);
@@ -902,6 +1070,26 @@ function startQuiz() {
   wrongList = [];
 
   document.getElementById('header-level-label').textContent = selectedLevel + '年生';
+  showScreen('quiz-screen');
+  showQuestion();
+}
+
+function startWeakDrill() {
+  const d = loadData();
+  const entries = Object.entries(d.weakWords || {});
+  if (entries.length === 0) return;
+  // 間違い回数が多い順に最大10問
+  entries.sort((a, b) => b[1].count - a[1].count);
+  const top = entries.slice(0, 10);
+  // 漢字データから該当オブジェクトを取得
+  const allKanji = Object.values(KANJI_DATA).flat();
+  currentQuestions = top.map(([kanji]) => allKanji.find(k => k.kanji === kanji)).filter(Boolean);
+  currentQuestions = currentQuestions.sort(() => Math.random() - 0.5);
+  isWeakDrill = true;
+  currentIndex = 0;
+  correctCount = 0;
+  wrongList = [];
+  document.getElementById('header-level-label').textContent = '🔥 苦手ドリル';
   showScreen('quiz-screen');
   showQuestion();
 }
@@ -996,12 +1184,19 @@ function showResult(result) {
   const detail = document.getElementById('result-detail');
   const answer = document.getElementById('result-answer');
 
+  const d = loadData();
   if (result.correct) {
     correctCount++;
     icon.textContent = '🎉';
     label.textContent = 'せいかい！';
     label.className = 'result-label correct';
     detail.textContent = result.comment || 'よくできました！';
+    // 苦手から1回分減らす
+    if (d.weakWords[q.kanji]) {
+      d.weakWords[q.kanji].count--;
+      if (d.weakWords[q.kanji].count <= 0) delete d.weakWords[q.kanji];
+      saveData(d);
+    }
   } else {
     wrongList.push(q);
     icon.textContent = '😢';
@@ -1010,6 +1205,10 @@ function showResult(result) {
     detail.textContent = result.recognized
       ? `書いた文字:「${result.recognized}」 / ${result.comment || ''}`
       : result.comment || 'もう一度練習してみよう';
+    // 苦手に追加
+    if (!d.weakWords[q.kanji]) d.weakWords[q.kanji] = { reading: q.reading, count: 0 };
+    d.weakWords[q.kanji].count++;
+    saveData(d);
   }
   answer.textContent = '正解: ' + q.kanji;
 
@@ -1029,12 +1228,13 @@ function nextQuestion() {
 }
 
 function showFinalResult() {
+  const total = currentQuestions.length;
   showScreen('result-screen');
   document.getElementById('score-num').textContent = correctCount;
   document.getElementById('correct-count').textContent = correctCount;
-  document.getElementById('wrong-count').textContent = 10 - correctCount;
+  document.getElementById('wrong-count').textContent = total - correctCount;
 
-  const pct = correctCount / 10;
+  const pct = correctCount / total;
   let icon = '🏆', title = 'すばらしい！';
   if (pct < 0.5) { icon = '📚'; title = 'もっと練習しよう！'; }
   else if (pct < 0.7) { icon = '💪'; title = 'よくがんばった！'; }
@@ -1055,15 +1255,124 @@ function showFinalResult() {
   } else {
     wrongSection.style.display = 'none';
   }
+
+  // 通常ドリルのみ履歴保存
+  if (!isWeakDrill) {
+    const d = loadData();
+    d.history = d.history || [];
+    d.history.unshift({
+      date: new Date().toLocaleDateString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+      level: selectedLevel,
+      score: correctCount,
+      total
+    });
+    if (d.history.length > 20) d.history = d.history.slice(0, 20);
+    saveData(d);
+  }
+
+  // 苦手ドリルボタン更新
+  const d2 = loadData();
+  const wc = Object.keys(d2.weakWords || {}).length;
+  const rwb = document.getElementById('result-weak-btn');
+  if (wc === 0) {
+    rwb.classList.add('disabled');
+    rwb.onclick = null;
+  } else {
+    rwb.classList.remove('disabled');
+    rwb.onclick = startWeakDrill;
+  }
+  updateHomeButtons();
 }
 
-function retryQuiz() { startQuiz(); }
-function goHome() { showScreen('start-screen'); }
+function retryQuiz() {
+  if (isWeakDrill) { startWeakDrill(); }
+  else { startQuiz(); }
+}
+function goHome() { showScreen('start-screen'); updateHomeButtons(); }
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+
+// ===== ホームボタン更新 =====
+function updateHomeButtons() {
+  const d = loadData();
+  const wc = Object.keys(d.weakWords || {}).length;
+  const hwb = document.getElementById('home-weak-btn');
+  const hws = document.getElementById('home-weak-sub');
+  if (wc === 0) {
+    hwb.classList.add('disabled');
+    hwb.onclick = null;
+    hws.textContent = '苦手漢字がまだありません';
+  } else {
+    hwb.classList.remove('disabled');
+    hwb.onclick = startWeakDrill;
+    hws.textContent = Math.min(wc, 10) + '問';
+  }
+  const hss = document.getElementById('home-stats-sub');
+  hss.textContent = d.history && d.history.length > 0 ? d.history.length + '件の記録' : 'まだありません';
+}
+
+// ===== 記録画面レンダリング =====
+function renderStats() {
+  const d = loadData();
+  const hist = d.history || [];
+  const weak = d.weakWords || {};
+
+  // サマリー
+  const totalDrills = hist.length;
+  const totalCorrect = hist.reduce((s, h) => s + h.score, 0);
+  const totalQ = hist.reduce((s, h) => s + h.total, 0);
+  document.getElementById('stat-total').textContent = totalDrills;
+  document.getElementById('stat-correct').textContent = totalCorrect;
+  document.getElementById('stat-rate').textContent = totalQ > 0 ? Math.round(totalCorrect / totalQ * 100) + '%' : '0%';
+
+  // 苦手リスト
+  const weakEntries = Object.entries(weak).sort((a, b) => b[1].count - a[1].count);
+  const grid = document.getElementById('stats-weak-grid');
+  const empty = document.getElementById('stats-weak-empty');
+  const drillBtn = document.getElementById('stats-weak-drill-btn');
+  if (weakEntries.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    drillBtn.classList.add('disabled');
+    drillBtn.onclick = null;
+  } else {
+    empty.style.display = 'none';
+    grid.innerHTML = weakEntries.map(([kanji, info]) =>
+      `<div class="weak-chip">
+        <span class="weak-chip-kanji">${kanji}</span>
+        <span class="weak-chip-reading">${info.reading}</span>
+        <span class="weak-chip-count">✕${info.count}</span>
+      </div>`
+    ).join('');
+    drillBtn.classList.remove('disabled');
+    drillBtn.onclick = startWeakDrill;
+  }
+
+  // 履歴
+  const histList = document.getElementById('stats-history-list');
+  if (hist.length === 0) {
+    histList.innerHTML = '<div style="font-size:13px;color:#b5a08a">記録がありません</div>';
+  } else {
+    histList.innerHTML = hist.map(h => `
+      <div class="history-item">
+        <span class="history-lv">${h.level}年生</span>
+        <span class="history-date">${h.date}</span>
+        <span class="history-score">${h.score}/${h.total}</span>
+      </div>`).join('');
+  }
+}
+
+function clearAllStats() {
+  localStorage.removeItem(STORAGE_KEY);
+  renderStats();
+  updateHomeButtons();
+}
+
+// 起動時に更新
+updateHomeButtons();
 </script>
 </body>
 </html>
