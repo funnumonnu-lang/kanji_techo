@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>かんじ手帳</title>
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&family=BIZ+UDPMincho&family=Zen+Kurenaido&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -212,11 +212,6 @@
       overflow: hidden;
       width: 100%;
       aspect-ratio: 1 / 1;
-      transition: height 0.35s ease, width 0.35s ease;
-    }
-    /* 判定後：縮小モード */
-    .canvas-wrap.compact {
-      aspect-ratio: unset;
     }
     #draw-canvas {
       display: block;
@@ -239,9 +234,9 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.4s ease;
-      font-family: 'Noto Serif JP', serif;
+      font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
       font-weight: 700;
-      font-size: 80px; /* JSで上書き */
+      font-size: min(58vw, 58vh);
       color: rgba(200, 30, 30, 0.30);
       line-height: 1;
       user-select: none;
@@ -1005,19 +1000,11 @@ let canvas, ctx;
 function initCanvas() {
   canvas = document.getElementById('draw-canvas');
   const wrap = document.getElementById('canvas-wrap');
-
-  // 通常時：画面幅いっぱいの正方形
-  wrap.classList.remove('compact');
-  wrap.style.height = '';
-  wrap.style.width  = '';
-  wrap.style.margin = '';
-
   const w = wrap.clientWidth;
   canvas.width = w;
   canvas.height = w;
   canvas.style.width = '100%';
   canvas.style.height = '100%';
-
   ctx = canvas.getContext('2d');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, w, w);
@@ -1038,37 +1025,7 @@ function initCanvas() {
   }
 }
 
-// 判定後にキャンバスをコンパクトに縮小（正方形を維持）
-function compactCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  const screenH = window.innerHeight;
-  const header  = document.querySelector('.quiz-header');
-  const qcard   = document.querySelector('.question-card');
-  const ilabel  = document.querySelector('.input-label');
-  const actions = document.querySelector('.input-actions');
-  const rcard   = document.querySelector('.result-card');
 
-  const usedH = (header?.offsetHeight  || 50)
-              + (qcard?.offsetHeight   || 120)
-              + (ilabel?.offsetHeight  || 20)
-              + (actions?.offsetHeight || 54)
-              + (rcard?.offsetHeight   || 160)
-              + 20 + 14*3 + 12 + 16;
-
-  const available = screenH - usedH - 16;
-  const maxW = wrap.parentElement?.clientWidth || wrap.clientWidth;
-  const size = Math.min(maxW, Math.max(available, 120));
-
-  wrap.classList.add('compact');
-  // 幅・高さ両方を同じサイズにして正方形を維持
-  wrap.style.width  = size + 'px';
-  wrap.style.height = size + 'px';
-  wrap.style.margin = '0 auto'; // 中央寄せ
-
-  // answer-overlayのフォントサイズをキャンバスに連動
-  const ao = document.getElementById('answer-overlay');
-  if (ao) ao.style.fontSize = Math.round(size * 0.82) + 'px';
-}
 
 function drawGuide(w) {
   const guide = document.getElementById('canvas-guide');
@@ -1383,8 +1340,6 @@ function showResult(result) {
   nextBtn.textContent = currentIndex < 9 ? 'つぎへ →' : '結果をみる';
   overlay.classList.add('show');
 
-  // 判定パネルのレンダリング後にキャンバスを縮小
-  requestAnimationFrame(() => requestAnimationFrame(compactCanvas));
 }
 
 function nextQuestion() {
