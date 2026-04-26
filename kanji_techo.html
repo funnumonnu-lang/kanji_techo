@@ -1248,7 +1248,7 @@ async function submitAnswer() {
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'flex';
 
-  const imageData = canvas.toDataURL('image/png').split(',')[1];
+  const imageData = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
   const q = currentQuestions[currentIndex];
 
   try {
@@ -1263,7 +1263,7 @@ async function submitAnswer() {
           content: [
             {
               type: 'image',
-              source: { type: 'base64', media_type: 'image/png', data: imageData }
+              source: { type: 'base64', media_type: 'image/jpeg', data: imageData }
             },
             {
               type: 'text',
@@ -1290,7 +1290,9 @@ async function submitAnswer() {
     showResult(result);
   } catch (err) {
     console.error('API Error:', err);
-    showResult({ correct: false, recognized: null, comment: '通信エラー。もう一度お試しください。' });
+    // エラー詳細を表示してデバッグしやすくする
+    const msg = err?.message || String(err);
+    showResult({ correct: false, recognized: null, comment: `エラー: ${msg}` });
   }
 }
 
