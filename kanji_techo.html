@@ -1248,7 +1248,15 @@ async function submitAnswer() {
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'flex';
 
-  const imageData = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+  // 送信前にキャンバスを300x300に縮小（データ軽量化）
+  const offscreen = document.createElement('canvas');
+  offscreen.width = 300;
+  offscreen.height = 300;
+  const offCtx = offscreen.getContext('2d');
+  offCtx.fillStyle = '#fff';
+  offCtx.fillRect(0, 0, 300, 300);
+  offCtx.drawImage(canvas, 0, 0, 300, 300);
+  const imageData = offscreen.toDataURL('image/jpeg', 0.8).split(',')[1];
   const q = currentQuestions[currentIndex];
 
   try {
