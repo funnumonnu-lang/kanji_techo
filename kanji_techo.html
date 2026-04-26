@@ -214,56 +214,58 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 20px 18px;
-      gap: 12px;
-      min-height: 280px;
+      padding: 0;
+      gap: 0;
+      width: 100%;
+      aspect-ratio: 1 / 1;
     }
     /* 漢字練習帳の格子ガイド（背景） */
     .scribble-wrap::before {
       content: '';
       position: absolute;
-      inset: 16px;
+      inset: 10px;
       border: 2px solid #e8ddd0;
-      border-radius: 14px;
+      border-radius: 20px;
       pointer-events: none;
     }
     .scribble-wrap::after {
       content: '';
       position: absolute;
-      top: 16px; bottom: 16px;
+      top: 10px; bottom: 10px;
       left: 50%; width: 0;
       border-left: 1.5px dashed #e8ddd0;
       pointer-events: none;
     }
     .scribble-hline {
       position: absolute;
-      left: 16px; right: 16px;
+      left: 10px; right: 10px;
       top: 50%; height: 0;
       border-top: 1.5px dashed #e8ddd0;
       pointer-events: none;
     }
     #kanji-input {
       position: relative;
-      width: 100%;
-      max-width: 280px;
+      width: 85%;
+      height: 85%;
       text-align: center;
-      font-size: 130px;
-      font-weight: 900;
-      font-family: 'Noto Serif JP', serif;
+      font-size: min(55vw, 55vh, 340px);
       font-weight: 700;
+      font-family: 'Noto Serif JP', serif;
       color: #1a0f08;
       background: transparent;
       border: none;
       outline: none;
       caret-color: #c0561e;
-      line-height: 1.1;
-      /* Scribble が働くよう -webkit-user-select は auto のまま */
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       -webkit-user-select: auto;
       z-index: 1;
+      padding: 0;
     }
     #kanji-input::placeholder {
       color: #d4c4b0;
-      font-size: 90px;
     }
     .pencil-hint {
       font-size: 12px; color: #b5a08a;
@@ -690,7 +692,7 @@
 
       <!-- Scribble入力エリア -->
       <div class="input-section">
-        <span class="input-label">✏️ Apple Pencilで書こう</span>
+        <span class="input-label">✏️ Apple Pencilで書こう（Scribbleで自動変換）</span>
         <div class="scribble-wrap">
           <div class="scribble-hline"></div>
           <input
@@ -701,10 +703,10 @@
             autocorrect="off"
             autocapitalize="none"
             spellcheck="false"
-            placeholder="漢字"
+            placeholder=""
             oninput="onInputChange()"
           />
-          <span class="pencil-hint">🍎 Scribbleで自動変換されます</span>
+
         </div>
         <div class="loading-indicator" id="loading-indicator" style="display:none">
           <div class="spinner"></div>
