@@ -235,11 +235,13 @@
       opacity: 0;
       transition: opacity 0.4s ease;
       font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
-      font-weight: 700;
+      font-weight: 400;
       font-size: min(58vw, 58vh);
-      color: rgba(200, 30, 30, 0.30);
+      color: rgba(200, 30, 30, 0.28);
       line-height: 1;
       user-select: none;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
     .answer-overlay.show {
       opacity: 1;
@@ -1265,7 +1267,7 @@ async function submitAnswer() {
             },
             {
               type: 'text',
-              text: `手書きの漢字を判定してください。読み:「${q.reading}」 正解:「${q.kanji}」\n字形がある程度整っていて、正解の漢字として認識できる場合のみ正解としてください。雑すぎる字や明らかに違う字は不正解としてください。\nJSON形式のみ: {"correct": true/false, "recognized": "読み取った文字", "comment": "短い日本語コメント"}`
+              text: `手書きの漢字を判定してください。読み:「${q.reading}」 正解:「${q.kanji}」\n小学生が書いた手書き文字として、正解の漢字に見えるかどうかを判定してください。多少バランスが悪くても、線の数・形が合っていれば正解としてください。明らかに全く違う漢字の場合のみ不正解にしてください。\nJSON形式のみ: {"correct": true/false, "recognized": "読み取った文字", "comment": "短い日本語コメント（ひとこと応援も添えて）"}`
             }
           ]
         }]
@@ -1288,7 +1290,7 @@ async function submitAnswer() {
     showResult(result);
   } catch (err) {
     console.error('API Error:', err);
-    showResult({ correct: false, recognized: '?', comment: '通信エラー。もう一度お試しください。' });
+    showResult({ correct: false, recognized: null, comment: '通信エラー。もう一度お試しください。' });
   }
 }
 
@@ -1326,7 +1328,8 @@ function showResult(result) {
     icon.textContent = '😢';
     label.textContent = 'もう少し！';
     label.className = 'result-label wrong';
-    detail.textContent = result.recognized
+    const validRecognized = result.recognized && result.recognized !== '?';
+    detail.textContent = validRecognized
       ? `書いた文字:「${result.recognized}」 / ${result.comment || ''}`
       : result.comment || 'もう一度練習してみよう';
     // 苦手に追加
