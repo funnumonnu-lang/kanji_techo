@@ -204,7 +204,7 @@
       color: #b5a08a;
       letter-spacing: 0.1em;
     }
-    .canvas-wrap {
+    .scribble-wrap {
       position: relative;
       background: #fff;
       border-radius: 24px;
@@ -212,18 +212,53 @@
       overflow: hidden;
       width: 100%;
       aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #draw-canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-    }
-    .canvas-guide {
+    .scribble-wrap::before {
+      content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 10px;
+      border: 2px solid #e8ddd0;
+      border-radius: 20px;
       pointer-events: none;
+      z-index: 0;
     }
+    .scribble-wrap::after {
+      content: '';
+      position: absolute;
+      top: 10px; bottom: 10px;
+      left: 50%; width: 0;
+      border-left: 1.5px dashed #e8ddd0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .scribble-hline {
+      position: absolute;
+      left: 10px; right: 10px;
+      top: 50%; height: 0;
+      border-top: 1.5px dashed #e8ddd0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #kanji-input {
+      position: relative;
+      width: 85%; height: 85%;
+      text-align: center;
+      font-size: min(40vw, 40vh);
+      font-weight: 400;
+      font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
+      color: #1a0f08;
+      background: transparent;
+      border: none; outline: none;
+      caret-color: #c0561e;
+      line-height: 1;
+      -webkit-user-select: auto;
+      z-index: 1; padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    #kanji-input::placeholder { color: #d4c4b0; }
     .answer-overlay {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -233,7 +268,7 @@
       transition: opacity 0.4s ease;
       font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
       font-weight: 400;
-      font-size: min(42vw, 42vh);
+      font-size: min(40vw, 40vh);
       color: rgba(200, 30, 30, 0.35);
       line-height: 1;
       user-select: none;
@@ -241,17 +276,6 @@
       -webkit-font-smoothing: antialiased;
     }
     .answer-overlay.show { opacity: 1; }
-    /* 非対応メッセージ */
-    .unsupported-msg {
-      display: none;
-      background: #fff3cd;
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #856404;
-      text-align: center;
-      line-height: 1.6;
-    }
     .input-actions {
       display: flex;
       gap: 10px;
@@ -664,22 +688,28 @@
 
       <!-- 手書きキャンバス -->
       <div class="input-section">
-        <span class="input-label" id="input-label">✏️ Apple Pencilで書こう</span>
-        <div class="canvas-wrap" id="canvas-wrap">
-          <canvas id="draw-canvas"></canvas>
-          <svg class="canvas-guide" id="canvas-guide" xmlns="http://www.w3.org/2000/svg"></svg>
+        <span class="input-label">✏️ Apple Pencilで書こう（Scribbleで自動変換）</span>
+        <div class="scribble-wrap" id="scribble-wrap">
+          <div class="scribble-hline"></div>
+          <input
+            id="kanji-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder=""
+            oninput="onInputChange()"
+          />
           <div class="answer-overlay" id="answer-overlay"></div>
-        </div>
-        <div class="unsupported-msg" id="unsupported-msg">
-          ⚠️ お使いのブラウザは手書き認識に対応していません。<br>
-          Scribble入力モードに切り替えます。
         </div>
         <div class="loading-indicator" id="loading-indicator" style="display:none">
           <div class="spinner"></div>
           <span>判定中...</span>
         </div>
         <div class="input-actions">
-          <button class="clear-btn" onclick="clearCanvas()">消す</button>
+          <button class="clear-btn" onclick="clearInput()">消す</button>
           <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>答えを送る</button>
         </div>
       </div>
@@ -1062,52 +1092,19 @@ function getPos(e) {
   };
 }
 
-// ===== キャンバス + Web Handwriting Recognition =====
-let isDrawing = false;
-let lastX = 0, lastY = 0;
-let canvasInitialized = false;
-let lastWidth = 8, lastPressure = 0.5, strokePoints = [];
-let canvas, ctx;
-let handwritingStrokes = []; // 認識用のストローク記録
-let currentStroke = [];
-let recognizerAvailable = false;
+// ===== テキスト入力 =====
+function onInputChange() {
+  const val = document.getElementById('kanji-input').value.trim();
+  hasDrawn = val.length > 0;
+  document.getElementById('submit-btn').disabled = !hasDrawn;
+}
 
-async function initCanvas() {
-  canvas = document.getElementById('draw-canvas');
-  const wrap = document.getElementById('canvas-wrap');
-  const w = wrap.clientWidth;
-  canvas.width = w; canvas.height = w;
-  canvas.style.width = '100%'; canvas.style.height = '100%';
-  ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, w, w);
-  drawGuide(w);
-  ctx.strokeStyle = '#1a0f08';
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-
-  // Web Handwriting Recognition API の対応確認
-  if ('createHandwritingRecognizer' in navigator) {
-    try {
-      recognizerAvailable = true;
-      document.getElementById('input-label').textContent = '✏️ Apple Pencilで書こう（自動認識）';
-    } catch(e) {
-      recognizerAvailable = false;
-    }
-  } else {
-    recognizerAvailable = false;
-    document.getElementById('unsupported-msg').style.display = 'block';
-    document.getElementById('input-label').textContent = '✏️ 書いて「答えを送る」を押そう';
-  }
-
-  if (!canvasInitialized) {
-    canvas.style.touchAction = 'none';
-    canvas.addEventListener('pointerdown', e => { e.preventDefault(); startDraw(e); });
-    canvas.addEventListener('pointermove', e => { e.preventDefault(); draw(e); });
-    canvas.addEventListener('pointerup', e => endDraw(e));
-    canvas.addEventListener('pointercancel', e => endDraw(e));
-    canvas.addEventListener('pointerleave', e => endDraw(e));
-    canvasInitialized = true;
-  }
+function clearInput() {
+  document.getElementById('kanji-input').value = '';
+  hasDrawn = false;
+  document.getElementById('submit-btn').disabled = true;
+  const ao = document.getElementById('answer-overlay');
+  if (ao) { ao.classList.remove('show'); ao.textContent = ''; }
 }
 
 function drawGuide(w) {
@@ -1213,24 +1210,7 @@ function clearCanvas() {
   if (ao) { ao.classList.remove('show'); ao.textContent = ''; }
 }
 
-// Web Handwriting Recognition APIで認識
-async function recognizeHandwriting(q) {
-  if (!recognizerAvailable || handwritingStrokes.length === 0) return null;
-  try {
-    const recognizer = await navigator.createHandwritingRecognizer({ languages: ['ja'] });
-    const drawing = recognizer.startDrawing({ hints: { recognitionType: 'text' } });
-    for (const stroke of handwritingStrokes) {
-      const s = drawing.addStroke();
-      for (const pt of stroke) s.addPoint({ x: pt.x, y: pt.y, t: pt.t });
-    }
-    const results = await drawing.getPrediction();
-    recognizer.finish();
-    return results?.[0]?.text || null;
-  } catch(e) {
-    console.error('Handwriting recognition error:', e);
-    return null;
-  }
-}
+
 
 // ===== レベル選択 =====
 function selectLevel(level) {
@@ -1253,7 +1233,6 @@ function startQuiz() {
 
   document.getElementById('header-level-label').textContent = selectedLevel + '年生';
   showScreen('quiz-screen');
-  setTimeout(initCanvas, 50);
   showQuestion();
 }
 
@@ -1274,7 +1253,6 @@ function startWeakDrill() {
   wrongList = [];
   document.getElementById('header-level-label').textContent = '🔥 苦手ドリル';
   showScreen('quiz-screen');
-  setTimeout(initCanvas, 50);
   showQuestion();
 }
 
@@ -1302,50 +1280,30 @@ function showQuestion() {
     document.getElementById('question-example').style.display = 'none';
   }
 
-  clearCanvas();
+  clearInput();
   hasDrawn = false;
   isSubmitting = false;
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'none';
+  setTimeout(() => { const inp = document.getElementById('kanji-input'); if(inp) inp.focus(); }, 100);
 }
 
 // ===== 答え送信 =====
-async function submitAnswer() {
+function submitAnswer() {
   if (!hasDrawn || isSubmitting) return;
   isSubmitting = true;
   document.getElementById('submit-btn').disabled = true;
 
+  const inputText = document.getElementById('kanji-input').value.trim();
   const q = currentQuestions[currentIndex];
-  document.getElementById('loading-indicator').style.display = 'flex';
-
-  // 正解オーバーレイ表示
   const ao = document.getElementById('answer-overlay');
   if (ao) { ao.textContent = q.kanji; ao.classList.add('show'); }
-
-  // 手書き認識を試みる
-  let recognized = null;
-  if (recognizerAvailable) {
-    recognized = await recognizeHandwriting(q);
-  }
-
-  document.getElementById('loading-indicator').style.display = 'none';
-
-  if (recognized !== null) {
-    // 認識成功：文字列で判定
-    const correct = recognized === q.kanji || recognized.includes(q.kanji);
-    showResult({
-      correct,
-      recognized,
-      comment: correct ? 'せいかい！よくできました！' : `「${q.kanji}」と見比べてみよう！`
-    });
-  } else {
-    // 認識不可：手書き線を見せて「つぎへ」のみ表示
-    showResult({
-      correct: null,
-      recognized: null,
-      comment: '正解と見比べてみよう！'
-    });
-  }
+  const correct = inputText === q.kanji;
+  showResult({
+    correct,
+    recognized: inputText,
+    comment: correct ? 'せいかい！よくできました！' : `「${q.kanji}」と見比べてみよう！`
+  });
 }
 
 function showResult(result) {
@@ -1358,14 +1316,7 @@ function showResult(result) {
   const answer = document.getElementById('result-answer');
 
   const d = loadData();
-  if (result.correct === null) {
-    // 認識不可：判定なし
-    icon.textContent = '👀';
-    label.textContent = '見比べてみよう！';
-    label.className = 'result-label';
-    label.style.color = '#8b7355';
-    detail.textContent = result.comment || '';
-  } else if (result.correct) {
+  if (result.correct) {
     correctCount++;
     icon.textContent = '🎉';
     label.textContent = 'せいかい！';
