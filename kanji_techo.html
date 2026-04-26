@@ -204,7 +204,7 @@
       color: #b5a08a;
       letter-spacing: 0.1em;
     }
-    .canvas-wrap {
+    .scribble-wrap {
       position: relative;
       background: #fff;
       border-radius: 24px;
@@ -212,40 +212,50 @@
       overflow: hidden;
       width: 100%;
       aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    #draw-canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-      cursor: crosshair;
-    }
-    /* 格子ガイド */
-    .canvas-guide {
+    .scribble-wrap::before {
+      content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      inset: 10px;
+      border: 2px solid #e8ddd0;
+      border-radius: 20px;
       pointer-events: none;
     }
-    /* 正解文字オーバーレイ */
-    .answer-overlay {
+    .scribble-wrap::after {
+      content: '';
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      display: flex; align-items: center; justify-content: center;
+      top: 10px; bottom: 10px;
+      left: 50%; width: 0;
+      border-left: 1.5px dashed #e8ddd0;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-      font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
+    }
+    .scribble-hline {
+      position: absolute;
+      left: 10px; right: 10px;
+      top: 50%; height: 0;
+      border-top: 1.5px dashed #e8ddd0;
+      pointer-events: none;
+    }
+    #kanji-input {
+      position: relative;
+      width: 85%; height: 85%;
+      text-align: center;
+      font-size: min(52vw, 52vh);
       font-weight: 400;
-      font-size: min(45vw, 45vh);
-      color: rgba(200, 30, 30, 0.28);
+      font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
+      color: #1a0f08;
+      background: transparent;
+      border: none; outline: none;
+      caret-color: #c0561e;
       line-height: 1;
-      user-select: none;
+      -webkit-user-select: auto;
+      z-index: 1; padding: 0;
       -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
     }
-    .answer-overlay.show {
-      opacity: 1;
-    }
+    #kanji-input::placeholder { color: #d4c4b0; }
     .input-actions {
       display: flex;
       gap: 10px;
@@ -740,18 +750,27 @@
 
       <!-- 手書きキャンバス -->
       <div class="input-section">
-        <span class="input-label">✏️ Apple Pencilで書こう</span>
-        <div class="canvas-wrap" id="canvas-wrap">
-          <canvas id="draw-canvas"></canvas>
-          <svg class="canvas-guide" id="canvas-guide" xmlns="http://www.w3.org/2000/svg"></svg>
-          <div class="answer-overlay" id="answer-overlay"></div>
+        <span class="input-label">✏️ Apple Pencilで書こう（Scribbleで自動変換）</span>
+        <div class="scribble-wrap" id="scribble-wrap">
+          <div class="scribble-hline"></div>
+          <input
+            id="kanji-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder=""
+            oninput="onInputChange()"
+          />
         </div>
         <div class="loading-indicator" id="loading-indicator" style="display:none">
           <div class="spinner"></div>
           <span>判定中...</span>
         </div>
         <div class="input-actions">
-          <button class="clear-btn" onclick="clearCanvas()">消す</button>
+          <button class="clear-btn" onclick="clearInput()">消す</button>
           <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>答えを送る</button>
         </div>
       </div>
@@ -1092,10 +1111,6 @@ let wrongList = [];
 let hasDrawn = false;
 let isSubmitting = false;
 let isWeakDrill = false;
-let isDrawing = false;
-let lastX = 0, lastY = 0;
-let canvasInitialized = false;
-let canvas, ctx;
 
 // ===== キャンバス =====
 function initCanvas() {
@@ -1153,112 +1168,15 @@ function getPos(e) {
   };
 }
 
-// 筆描画用の状態
-let lastWidth = 8;
-let lastPressure = 0.5;
-let strokePoints = []; // はらい検知用に直近の座標を保持
-
-function getPenWidth(pressure, canvasW) {
-  const base = canvasW / 22;
-  // 筆圧0.0〜1.0 → 幅をbase*0.2〜base*1.8 に大きく変化
-  return Math.max(2, base * (0.2 + pressure * 1.6));
+// ===== テキスト入力 =====
+function onInputChange() {
+  const val = document.getElementById('kanji-input').value.trim();
+  hasDrawn = val.length > 0;
+  document.getElementById('submit-btn').disabled = !hasDrawn;
 }
 
-function startDraw(e) {
-  isDrawing = true;
-  canvas.setPointerCapture(e.pointerId);
-  const pos = getPos(e);
-  lastX = pos.x; lastY = pos.y;
-  strokePoints = [pos];
-
-  const p = (e.pointerType === 'pen' && e.pressure > 0) ? e.pressure : 0.5;
-  lastPressure = p;
-  const w = getPenWidth(p, canvas.width);
-  lastWidth = w;
-
-  // とめ：筆を置いた瞬間に少し大きめの点を打つ
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, w * 0.65, 0, Math.PI * 2);
-  ctx.fillStyle = '#1a0f08';
-  ctx.fill();
-
-  hasDrawn = true;
-  document.getElementById('submit-btn').disabled = false;
-}
-
-function draw(e) {
-  if (!isDrawing) return;
-  const pos = getPos(e);
-  strokePoints.push(pos);
-  if (strokePoints.length > 8) strokePoints.shift();
-
-  const p = (e.pointerType === 'pen' && e.pressure > 0) ? e.pressure : 0.5;
-
-  // 移動速度を計算（速いほど細く→はらいの表現）
-  const dx = pos.x - lastX, dy = pos.y - lastY;
-  const speed = Math.sqrt(dx*dx + dy*dy);
-  const speedFactor = Math.max(0, 1 - speed / (canvas.width / 5));
-
-  // 筆圧 × 速度で幅を決定
-  const combinedPressure = p * (0.5 + speedFactor * 0.5);
-  const targetW = getPenWidth(combinedPressure, canvas.width);
-
-  // 急激な変化を抑えるスムージング
-  const w = lastWidth * 0.6 + targetW * 0.4;
-  lastWidth = w;
-  lastPressure = p;
-
-  // 太さが変わる線をtrapezoid（台形）で描いて毛筆感を出す
-  const angle = Math.atan2(dy, dx);
-  const perp = angle + Math.PI / 2;
-  const hw = w / 2, lhw = lastWidth / 2;
-
-  ctx.beginPath();
-  ctx.moveTo(lastX + Math.cos(perp) * lhw, lastY + Math.sin(perp) * lhw);
-  ctx.lineTo(pos.x  + Math.cos(perp) * hw,  pos.y  + Math.sin(perp) * hw);
-  ctx.lineTo(pos.x  - Math.cos(perp) * hw,  pos.y  - Math.sin(perp) * hw);
-  ctx.lineTo(lastX - Math.cos(perp) * lhw, lastY - Math.sin(perp) * lhw);
-  ctx.closePath();
-  ctx.fillStyle = '#1a0f08';
-  ctx.fill();
-
-  // 繋ぎ目を滑らかにする小円
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, hw * 0.85, 0, Math.PI * 2);
-  ctx.fill();
-
-  lastX = pos.x; lastY = pos.y;
-}
-
-function endDraw(e) {
-  if (!isDrawing) return;
-  isDrawing = false;
-
-  // はらい：筆を離す直前の位置に向かって細くなる点を追加
-  if (e && strokePoints.length >= 2 && lastPressure < 0.6) {
-    const last = strokePoints[strokePoints.length - 1];
-    const prev = strokePoints[strokePoints.length - 2];
-    const dx = last.x - prev.x, dy = last.y - prev.y;
-    // 進行方向に少し延ばして細い点を打つ
-    const steps = 4;
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps;
-      const x = last.x + dx * t * 0.6;
-      const y = last.y + dy * t * 0.6;
-      const r = (lastWidth / 2) * (1 - t) * 0.5;
-      if (r < 1) break;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(26,15,8,${1 - t * 0.7})`;
-      ctx.fill();
-    }
-  }
-}
-
-function clearCanvas() {
-  if (!ctx) return;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+function clearInput() {
+  document.getElementById('kanji-input').value = '';
   hasDrawn = false;
   document.getElementById('submit-btn').disabled = true;
 }
@@ -1284,7 +1202,6 @@ function startQuiz() {
 
   document.getElementById('header-level-label').textContent = selectedLevel + '年生';
   showScreen('quiz-screen');
-  initCanvas();
   showQuestion();
 }
 
@@ -1305,7 +1222,6 @@ function startWeakDrill() {
   wrongList = [];
   document.getElementById('header-level-label').textContent = '🔥 苦手ドリル';
   showScreen('quiz-screen');
-  initCanvas();
   showQuestion();
 }
 
@@ -1333,11 +1249,12 @@ function showQuestion() {
     document.getElementById('question-example').style.display = 'none';
   }
 
-  clearCanvas();
+  clearInput();
   hasDrawn = false;
   isSubmitting = false;
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('loading-indicator').style.display = 'none';
+  setTimeout(() => { const inp = document.getElementById('kanji-input'); if(inp) inp.focus(); }, 100);
 }
 
 // ===== 答え送信 =====
@@ -1412,12 +1329,6 @@ function showResult(result) {
   document.getElementById('loading-indicator').style.display = 'none';
   const q = currentQuestions[currentIndex];
 
-  // 正解文字をキャンバスに重ねて表示
-  const ansOverlay = document.getElementById('answer-overlay');
-  ansOverlay.textContent = q.kanji;
-  ansOverlay.classList.add('show');
-
-  // 判定パネル表示後にキャンバスを縮小
   const overlay = document.getElementById('result-overlay');
   const icon = document.getElementById('result-icon');
   const label = document.getElementById('result-label');
@@ -1461,10 +1372,6 @@ function showResult(result) {
 
 function nextQuestion() {
   document.getElementById('result-overlay').classList.remove('show');
-  // 正解オーバーレイをリセット
-  const ao = document.getElementById('answer-overlay');
-  ao.classList.remove('show');
-  ao.textContent = '';
   currentIndex++;
   if (currentIndex >= 10) {
     showFinalResult();
