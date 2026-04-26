@@ -460,6 +460,69 @@
       animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== APIキー入力画面 ===== */
+    #apikey-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px 24px;
+    }
+    .apikey-icon { font-size: 64px; line-height: 1; }
+    .apikey-title {
+      font-size: 24px; font-weight: 900;
+      color: #2d2016; text-align: center;
+    }
+    .apikey-desc {
+      font-size: 13px; color: #8b7355;
+      text-align: center; line-height: 1.7;
+    }
+    .apikey-input-wrap {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(45,32,22,0.08);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .apikey-label {
+      font-size: 11px; font-weight: 700;
+      color: #b5a08a; letter-spacing: 0.1em;
+    }
+    #apikey-field {
+      width: 100%;
+      font-size: 13px;
+      font-family: monospace;
+      color: #2d2016;
+      background: #faf7f2;
+      border: 2px solid #e8ddd0;
+      border-radius: 10px;
+      padding: 12px;
+      outline: none;
+    }
+    #apikey-field:focus { border-color: #c0561e; }
+    .apikey-save-btn {
+      width: 100%;
+      background: #c0561e;
+      border: none; border-radius: 16px;
+      padding: 16px; font-size: 16px; font-weight: 900;
+      color: #fff; cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.06em;
+      transition: opacity 0.15s;
+    }
+    .apikey-save-btn:active { opacity: 0.85; }
+    .apikey-note {
+      font-size: 11px; color: #b5a08a;
+      text-align: center; line-height: 1.6;
+    }
+    .apikey-change-btn {
+      background: none; border: none;
+      font-size: 11px; color: #b5a08a;
+      cursor: pointer; text-decoration: underline;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      padding: 0;
+    }
     /* ===== 記録画面 ===== */
     #stats-screen {
       align-items: center;
@@ -578,6 +641,25 @@
 <body>
 <div id="app">
 
+  <!-- ===== APIキー入力画面 ===== -->
+  <div id="apikey-screen" class="screen">
+    <div class="apikey-icon">🔑</div>
+    <div class="apikey-title">APIキーを設定</div>
+    <div class="apikey-desc">
+      Anthropic の APIキーを入力してください。<br>
+      キーは端末内に保存され、外部には送信されません。
+    </div>
+    <div class="apikey-input-wrap">
+      <span class="apikey-label">API KEY</span>
+      <input id="apikey-field" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false"/>
+    </div>
+    <button class="apikey-save-btn" onclick="saveApiKey()">保存してはじめる →</button>
+    <div class="apikey-note">
+      🔒 キーはこの端末のみに保存されます<br>
+      <a href="https://console.anthropic.com" target="_blank" style="color:#c0561e">console.anthropic.com</a> で取得できます
+    </div>
+  </div>
+
   <!-- ===== スタート画面 ===== -->
   <div id="start-screen" class="screen active">
     <div class="app-icon">📖</div>
@@ -619,6 +701,7 @@
     <button class="start-btn" id="start-btn" disabled onclick="startQuiz()">
       はじめる →
     </button>
+    <button class="apikey-change-btn" onclick="showScreen('apikey-screen')">🔑 APIキーを変更する</button>
     <div class="home-action-row">
       <button class="stats-open-btn" onclick="showScreen('stats-screen'); renderStats()">
         <span class="btn-icon">📊</span>
@@ -978,6 +1061,22 @@ const KANJI_DATA = {
 
 // ===== localStorage =====
 const STORAGE_KEY = 'kanji_techo_v1';
+const APIKEY_KEY  = 'kanji_techo_apikey';
+
+function getApiKey() {
+  return localStorage.getItem(APIKEY_KEY) || '';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-field').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    alert('APIキーは sk-ant- で始まる必要があります');
+    return;
+  }
+  localStorage.setItem(APIKEY_KEY, key);
+  showScreen('start-screen');
+  updateHomeButtons();
+}
 function loadData() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { history: [], weakWords: {} }; }
   catch { return { history: [], weakWords: {} }; }
@@ -1264,7 +1363,7 @@ async function submitAnswer() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': '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',
+        'x-api-key': getApiKey(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -1518,8 +1617,12 @@ function clearAllStats() {
   updateHomeButtons();
 }
 
-// 起動時に更新
-updateHomeButtons();
+// 起動時にAPIキー確認
+if (!getApiKey()) {
+  showScreen('apikey-screen');
+} else {
+  updateHomeButtons();
+}
 </script>
 </body>
 </html>
