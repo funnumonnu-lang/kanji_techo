@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>かんじ手帳</title>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+JP:wght@400;700;900&family=BIZ+UDPMincho&family=Zen+Kurenaido&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #faf7f2;
+      font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    #app {
+      max-width: 480px;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: #faf7f2;
+      display: flex;
+      flex-direction: column;
+    }
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; min-height: 100dvh; }
+
+    /* ===== START SCREEN ===== */
+    #start-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      padding: 40px 24px;
+    }
+    .app-icon { font-size: 80px; line-height: 1; }
+    .app-title {
+      font-size: 38px; font-weight: 900;
+      color: #2d2016;
+      text-align: center;
+      letter-spacing: 0.06em;
+    }
+    .app-sub {
+      font-size: 14px; color: #8b7355;
+      text-align: center; line-height: 1.6;
+    }
+    .level-section {
+      width: 100%;
+    }
+    .level-label {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.12em; margin-bottom: 10px;
+      display: block;
+    }
+    .level-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .level-btn {
+      background: #fff;
+      border: 2px solid #e8ddd0;
+      border-radius: 14px;
+      padding: 14px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex; flex-direction: column; gap: 4px; align-items: center;
+      -webkit-appearance: none;
+    }
+    .level-btn:active { transform: scale(0.96); }
+    .level-btn.selected {
+      border-color: #c0561e;
+      background: #fff5f0;
+    }
+    .lv-kanji {
+      font-size: 22px; font-weight: 900;
+      color: #2d2016;
+    }
+    .lv-label {
+      font-size: 11px; color: #8b7355;
+      font-weight: 700;
+    }
+    .start-btn {
+      background: #c0561e;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      padding: 18px 0;
+      width: 100%;
+      font-size: 18px;
+      font-weight: 900;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .start-btn:not(:disabled):active { transform: scale(0.97); }
+
+    /* ===== QUIZ SCREEN ===== */
+    #quiz-screen { flex: 1; }
+
+    .quiz-header {
+      background: #2d2016;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 13px; font-weight: 700;
+      color: #d4b896;
+      letter-spacing: 0.08em;
+    }
+    .progress-wrap {
+      flex: 1;
+      background: rgba(255,255,255,0.15);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #e8874a;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 13px; font-weight: 700;
+      color: #d4b896;
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .quiz-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 16px;
+      gap: 14px;
+    }
+
+    /* 問題カード */
+    .question-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 2px 12px rgba(45,32,22,0.08);
+      text-align: center;
+    }
+    .question-hint {
+      font-size: 11px; font-weight: 700;
+      color: #c0561e;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+    .question-reading {
+      font-size: 32px; font-weight: 900;
+      color: #2d2016;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .question-meaning {
+      font-size: 14px; color: #8b7355;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .question-example {
+      font-size: 15px; color: #4a3825;
+      font-weight: 700;
+      line-height: 1.6;
+      background: #fdf5ec;
+      border-left: 3px solid #e8874a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 6px;
+      text-align: left;
+    }
+    .question-example-label {
+      font-size: 10px; color: #c0561e;
+      font-weight: 700; letter-spacing: 0.1em;
+      display: block; margin-bottom: 2px;
+    }
+    .masked {
+      display: inline-block;
+      background: #2d2016;
+      color: #2d2016;
+      border-radius: 3px;
+      min-width: 1em;
+      line-height: 1;
+    }
+
+    /* 入力エリア（手書きキャンバス） */
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-label {
+      font-size: 11px; font-weight: 700;
+      color: #b5a08a;
+      letter-spacing: 0.1em;
+    }
+    .scribble-wrap {
+      position: relative;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 2px 16px rgba(45,32,22,0.10);
+      overflow: hidden;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scribble-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 10px;
+      border: 2px solid #e8ddd0;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+    .scribble-wrap::after {
+      content: '';
+      position: absolute;
+      top: 10px; bottom: 10px;
+      left: 50%; width: 0;
+      border-left: 1.5px dashed #e8ddd0;
+      pointer-events: none;
+    }
+    .scribble-hline {
+      position: absolute;
+      left: 10px; right: 10px;
+      top: 50%; height: 0;
+      border-top: 1.5px dashed #e8ddd0;
+      pointer-events: none;
+    }
+    #kanji-input {
+      position: relative;
+      width: 85%; height: 85%;
+      text-align: center;
+      font-size: min(52vw, 52vh);
+      font-weight: 400;
+      font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
+      color: #1a0f08;
+      background: transparent;
+      border: none; outline: none;
+      caret-color: #c0561e;
+      line-height: 1;
+      -webkit-user-select: auto;
+      z-index: 1; padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    #kanji-input::placeholder { color: #d4c4b0; }
+    .input-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .clear-btn {
+      flex: 1;
+      background: #f3ede6;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #8b7355;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      transition: background 0.15s;
+    }
+    .clear-btn:active { background: #e8ddd0; }
+    .submit-btn {
+      flex: 2;
+      background: #c0561e;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.06em;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:not(:disabled):active { opacity: 0.85; }
+
+    /* 判定パネル（インライン） */
+    .result-overlay {
+      display: none;
+      padding: 0 0 16px;
+    }
+    .result-overlay.show {
+      display: block;
+    }
+    .result-card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 16px 20px 18px;
+      box-shadow: 0 4px 20px rgba(45,32,22,0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-icon {
+      font-size: 32px;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 18px; font-weight: 900;
+      text-align: center;
+      margin-bottom: 0;
+    }
+    .result-label.correct { color: #1a7a3e; }
+    .result-label.wrong { color: #c0561e; }
+    .result-detail {
+      font-size: 13px; color: #8b7355;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .result-answer {
+      font-size: 26px; font-weight: 900;
+      text-align: center;
+      color: #2d2016;
+      margin-bottom: 0;
+    }
+    .next-btn {
+      width: 100%;
+      background: #2d2016;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 900;
+      color: #faf7f2;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    .next-btn:active { opacity: 0.85; }
+
+    /* ===== RESULT SCREEN ===== */
+    #result-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 40px 24px;
+    }
+    .final-icon { font-size: 80px; line-height: 1; }
+    .final-title {
+      font-size: 28px; font-weight: 900;
+      color: #2d2016;
+      text-align: center;
+    }
+    .score-card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 28px 40px;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(45,32,22,0.1);
+      width: 100%;
+    }
+    .score-num {
+      font-size: 64px; font-weight: 900;
+      color: #c0561e;
+      line-height: 1;
+    }
+    .score-sub {
+      font-size: 14px; color: #8b7355;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .score-breakdown {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 14px;
+    }
+    .score-item {
+      display: flex; flex-direction: column;
+      gap: 4px; align-items: center;
+    }
+    .score-item-num {
+      font-size: 24px; font-weight: 900;
+    }
+    .score-item-num.ok { color: #1a7a3e; }
+    .score-item-num.ng { color: #c0561e; }
+    .score-item-label {
+      font-size: 11px; color: #b5a08a;
+      font-weight: 700; letter-spacing: 0.1em;
+    }
+    .wrong-list-section { width: 100%; }
+    .wrong-list-title {
+      font-size: 12px; font-weight: 700;
+      color: #b5a08a; letter-spacing: 0.1em;
+      margin-bottom: 10px;
+    }
+    .wrong-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .wrong-item {
+      background: #fff;
+      border: 2px solid #f3ede6;
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 16px; font-weight: 700;
+      color: #2d2016;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 2px;
+    }
+    .wrong-item-reading {
+      font-size: 10px; color: #b5a08a; font-weight: 500;
+    }
+    .retry-btn {
+      width: 100%;
+      background: #c0561e;
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px; font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.08em;
+      transition: opacity 0.15s;
+    }
+    .retry-btn:active { opacity: 0.85; }
+    .home-btn {
+      background: none;
+      border: 2px solid #e8ddd0;
+      border-radius: 18px;
+      padding: 16px;
+      width: 100%;
+      font-size: 15px; font-weight: 700;
+      color: #8b7355;
+      cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      transition: background 0.15s;
+    }
+    .home-btn:active { background: #f3ede6; }
+
+    /* ローディング */
+    .loading-indicator {
+      display: flex; align-items: center;
+      gap: 8px;
+      font-size: 13px; color: #b5a08a;
+      font-weight: 700;
+      justify-content: center;
+      padding: 4px 0;
+      min-height: 22px;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #e8ddd0;
+      border-top-color: #c0561e;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 記録画面 ===== */
+    #stats-screen {
+      align-items: center;
+      gap: 18px;
+      padding: 28px 20px 40px;
+    }
+    .stats-header {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .stats-title { font-size: 20px; font-weight: 900; color: #2d2016; }
+    .stats-close {
+      background: #f3ede6; border: none; border-radius: 50%;
+      width: 36px; height: 36px; font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .stats-summary {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px; width: 100%;
+    }
+    .stat-box {
+      background: #fff; border-radius: 16px;
+      padding: 14px 8px; text-align: center;
+      box-shadow: 0 2px 8px rgba(45,32,22,0.07);
+    }
+    .stat-box-num { font-size: 26px; font-weight: 900; color: #c0561e; }
+    .stat-box-label { font-size: 10px; color: #b5a08a; font-weight: 700; margin-top: 2px; }
+    .history-section { width: 100%; }
+    .history-title {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+      background: #fff; border-radius: 14px;
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 6px rgba(45,32,22,0.06);
+    }
+    .history-lv {
+      background: #fdf0e8; color: #c0561e;
+      font-size: 11px; font-weight: 900;
+      border-radius: 8px; padding: 4px 8px;
+      min-width: 40px; text-align: center;
+    }
+    .history-score { font-size: 15px; font-weight: 900; color: #2d2016; margin-left: auto; }
+    .history-date { font-size: 11px; color: #b5a08a; }
+
+    /* 苦手リスト */
+    .weak-section { width: 100%; }
+    .weak-title {
+      font-size: 11px; font-weight: 700; color: #b5a08a;
+      letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .weak-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .weak-chip {
+      background: #fff; border: 2px solid #fde8dd;
+      border-radius: 12px; padding: 8px 12px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .weak-chip-kanji { font-size: 20px; font-weight: 900; color: #2d2016; }
+    .weak-chip-reading { font-size: 10px; color: #b5a08a; }
+    .weak-chip-count { font-size: 10px; color: #c0561e; font-weight: 700; }
+    .weak-drill-btn {
+      width: 100%;
+      background: #7c3d10;
+      border: none; border-radius: 16px;
+      padding: 16px; font-size: 15px; font-weight: 900;
+      color: #fff; cursor: pointer;
+      font-family: 'Zen Maru Gothic', sans-serif;
+      letter-spacing: 0.06em;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .weak-drill-btn:active { opacity: 0.85; }
+    .weak-drill-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+    .clear-stats-btn {
+      background: none; border: 1px solid #e8ddd0;
+      border-radius: 12px; padding: 10px 18px;
+      font-size: 12px; color: #b5a08a; font-weight: 700;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    /* ホーム下部ボタン群 */
+    .home-action-row {
+      display: flex; gap: 10px; width: 100%;
+    }
+    .stats-open-btn {
+      flex: 1;
+      background: #fff; border: 2px solid #e8ddd0;
+      border-radius: 16px; padding: 14px 8px;
+      font-size: 13px; font-weight: 700; color: #8b7355;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background 0.15s;
+    }
+    .stats-open-btn:active { background: #f3ede6; }
+    .stats-open-btn .btn-icon { font-size: 22px; }
+    .weak-open-btn {
+      flex: 1;
+      background: #fff5f0; border: 2px solid #f5c4a8;
+      border-radius: 16px; padding: 14px 8px;
+      font-size: 13px; font-weight: 700; color: #c0561e;
+      cursor: pointer; font-family: 'Zen Maru Gothic', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      transition: background 0.15s;
+    }
+    .weak-open-btn:active { background: #fde8dd; }
+    .weak-open-btn .btn-icon { font-size: 22px; }
+    .weak-open-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sub { font-size: 10px; color: #b5a08a; font-weight: 500; }
+    .weak-open-btn .btn-sub { color: #e8874a; }
+
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== スタート画面 ===== -->
+  <div id="start-screen" class="screen active">
+    <div class="app-icon">📖</div>
+    <div>
+      <div class="app-title">かんじ手帳</div>
+      <div class="app-sub">Apple Pencilで漢字を練習しよう<br>1セット10問</div>
+    </div>
+
+    <div class="level-section">
+      <span class="level-label">LEVEL を選ぼう</span>
+      <div class="level-grid">
+        <button class="level-btn" data-level="1" onclick="selectLevel(1)">
+          <span class="lv-kanji">一</span>
+          <span class="lv-label">1年生</span>
+        </button>
+        <button class="level-btn" data-level="2" onclick="selectLevel(2)">
+          <span class="lv-kanji">二</span>
+          <span class="lv-label">2年生</span>
+        </button>
+        <button class="level-btn" data-level="3" onclick="selectLevel(3)">
+          <span class="lv-kanji">三</span>
+          <span class="lv-label">3年生</span>
+        </button>
+        <button class="level-btn" data-level="4" onclick="selectLevel(4)">
+          <span class="lv-kanji">四</span>
+          <span class="lv-label">4年生</span>
+        </button>
+        <button class="level-btn" data-level="5" onclick="selectLevel(5)">
+          <span class="lv-kanji">五</span>
+          <span class="lv-label">5年生</span>
+        </button>
+        <button class="level-btn" data-level="6" onclick="selectLevel(6)">
+          <span class="lv-kanji">六</span>
+          <span class="lv-label">6年生</span>
+        </button>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn" disabled onclick="startQuiz()">
+      はじめる →
+    </button>
+    <div class="home-action-row">
+      <button class="stats-open-btn" onclick="showScreen('stats-screen'); renderStats()">
+        <span class="btn-icon">📊</span>
+        <span>学習きろく</span>
+        <span class="btn-sub" id="home-stats-sub">まだありません</span>
+      </button>
+      <button class="weak-open-btn disabled" id="home-weak-btn">
+        <span class="btn-icon">🔥</span>
+        <span>苦手ドリル</span>
+        <span class="btn-sub" id="home-weak-sub">苦手漢字がまだありません</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== クイズ画面 ===== -->
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-header">
+      <span class="header-title" id="header-level-label">1年生</span>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+      </div>
+      <span class="progress-text" id="progress-text">0 / 30</span>
+    </div>
+
+    <div class="quiz-body">
+      <!-- 問題カード -->
+      <div class="question-card">
+        <div class="question-hint">この読みかたの漢字を書こう！</div>
+        <div class="question-reading" id="question-reading">―</div>
+        <div class="question-meaning" id="question-meaning">意味の例</div>
+        <div class="question-example" id="question-example" style="display:none">
+          <span class="question-example-label">れいぶん</span>
+          <span id="question-example-text"></span>
+        </div>
+      </div>
+
+      <!-- 手書きキャンバス -->
+      <div class="input-section">
+        <span class="input-label">✏️ Apple Pencilで書こう（Scribbleで自動変換）</span>
+        <div class="scribble-wrap" id="scribble-wrap">
+          <div class="scribble-hline"></div>
+          <input
+            id="kanji-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder=""
+            oninput="onInputChange()"
+          />
+        </div>
+        <div class="loading-indicator" id="loading-indicator" style="display:none">
+          <div class="spinner"></div>
+          <span>判定中...</span>
+        </div>
+        <div class="input-actions">
+          <button class="clear-btn" onclick="clearInput()">消す</button>
+          <button class="submit-btn" id="submit-btn" onclick="submitAnswer()" disabled>答えを送る</button>
+        </div>
+      </div>
+
+      <!-- 判定パネル（インライン） -->
+      <div class="result-overlay" id="result-overlay">
+        <div class="result-card">
+          <div class="result-icon" id="result-icon">🎉</div>
+          <div class="result-label" id="result-label">せいかい！</div>
+          <div class="result-detail" id="result-detail"></div>
+          <div class="result-answer" id="result-answer"></div>
+          <button class="next-btn" id="next-btn" onclick="nextQuestion()">つぎへ →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 結果画面 ===== -->
+  <div id="result-screen" class="screen">
+    <div class="final-icon" id="final-icon">🏆</div>
+    <div class="final-title" id="final-title">おわり！</div>
+    <div class="score-card">
+      <div class="score-num" id="score-num">0</div>
+      <div class="score-sub">/ 10問 せいかい</div>
+      <div class="score-breakdown">
+        <div class="score-item">
+          <span class="score-item-num ok" id="correct-count">0</span>
+          <span class="score-item-label">せいかい</span>
+        </div>
+        <div class="score-item">
+          <span class="score-item-num ng" id="wrong-count">0</span>
+          <span class="score-item-label">まちがい</span>
+        </div>
+      </div>
+    </div>
+    <div class="wrong-list-section" id="wrong-list-section" style="display:none">
+      <div class="wrong-list-title">まちがえた漢字</div>
+      <div class="wrong-list" id="wrong-list"></div>
+    </div>
+    <button class="retry-btn" onclick="retryQuiz()">もう一度やる 🔄</button>
+    <button class="weak-drill-btn disabled" id="result-weak-btn" style="margin-top:0">🔥 苦手ドリルをはじめる</button>
+    <button class="home-btn" onclick="goHome()">レベル選択へ</button>
+  </div>
+
+  <!-- ===== 記録画面 ===== -->
+  <div id="stats-screen" class="screen">
+    <div class="stats-header">
+      <span class="stats-title">📊 学習きろく</span>
+      <button class="stats-close" onclick="showScreen('start-screen'); updateHomeButtons()">✕</button>
+    </div>
+    <div class="stats-summary">
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-total">0</div>
+        <div class="stat-box-label">ドリル回数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-correct">0</div>
+        <div class="stat-box-label">せいかい数</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num" id="stat-rate">0%</div>
+        <div class="stat-box-label">せいかい率</div>
+      </div>
+    </div>
+    <div class="weak-section">
+      <div class="weak-title">苦手な漢字</div>
+      <div class="weak-grid" id="stats-weak-grid"></div>
+      <div id="stats-weak-empty" style="font-size:13px;color:#b5a08a;display:none">苦手な漢字はありません 🎉</div>
+      <br>
+      <button class="weak-drill-btn disabled" id="stats-weak-drill-btn">🔥 苦手ドリルをはじめる</button>
+    </div>
+    <div class="history-section">
+      <div class="history-title">さいきんの記録（最大20件）</div>
+      <div class="history-list" id="stats-history-list"></div>
+    </div>
+    <button class="clear-stats-btn" onclick="if(confirm('記録をすべて消しますか？'))clearAllStats()">記録をリセット</button>
+  </div>
+
+</div>
+
+<script>
+// ===== 単語データ =====
+const KANJI_DATA = {
+  1: [
+    { kanji: "山", reading: "やま", meaning: "高くそびえる地形", example: "あの●は雪がつもっている。" },
+    { kanji: "川", reading: "かわ", meaning: "流れる水の道", example: "●に魚がたくさんいる。" },
+    { kanji: "火", reading: "ひ", meaning: "燃えて光るもの", example: "キャンプで●をおこした。" },
+    { kanji: "水", reading: "みず", meaning: "飲める透明な液体", example: "●をコップに注ぐ。" },
+    { kanji: "木", reading: "き", meaning: "幹と葉のある植物", example: "公園の●に鳥がとまった。" },
+    { kanji: "土", reading: "つち", meaning: "地面をつくるもの", example: "●に種をまく。" },
+    { kanji: "日", reading: "にち・ひ", meaning: "太陽・一日のこと", example: "今●は晴れている。" },
+    { kanji: "月", reading: "つき", meaning: "夜空に光る天体", example: "丸い●が空に浮かんでいる。" },
+    { kanji: "金", reading: "きん", meaning: "光る貴重な金属", example: "●メダルをとる。" },
+    { kanji: "人", reading: "ひと", meaning: "人間のこと", example: "駅にたくさんの●がいる。" },
+    { kanji: "口", reading: "くち", meaning: "食べる・話すところ", example: "●を大きくあけて歌う。" },
+    { kanji: "手", reading: "て", meaning: "物をつかむ体の部分", example: "●を洗ってから食べる。" },
+    { kanji: "目", reading: "め", meaning: "見るための器官", example: "●を細めて遠くを見る。" },
+    { kanji: "耳", reading: "みみ", meaning: "聞くための器官", example: "●をすませて音楽を聴く。" },
+    { kanji: "足", reading: "あし", meaning: "歩くための体の部分", example: "●が速い選手が一位になった。" },
+    { kanji: "大", reading: "おお（きい）", meaning: "サイズがとても大きい", example: "●きな犬が走ってきた。" },
+    { kanji: "小", reading: "ちい（さい）", meaning: "サイズがとても小さい", example: "●さな虫を見つけた。" },
+    { kanji: "中", reading: "なか", meaning: "まんなか・内側", example: "箱の●におもちゃが入っている。" },
+    { kanji: "上", reading: "うえ", meaning: "高いところ", example: "棚の●に本がある。" },
+    { kanji: "下", reading: "した", meaning: "低いところ", example: "テーブルの●に猫がいる。" },
+    { kanji: "右", reading: "みぎ", meaning: "右の方向", example: "●に曲がると公園がある。" },
+    { kanji: "左", reading: "ひだり", meaning: "左の方向", example: "●手でボールをとった。" },
+    { kanji: "円", reading: "えん", meaning: "丸い形・お金の単位", example: "このりんごは百●です。" },
+    { kanji: "力", reading: "ちから", meaning: "強さ・パワー", example: "●いっぱい綱引きをした。" },
+    { kanji: "気", reading: "き", meaning: "気持ち・空気・元気", example: "元●に走り回る。" },
+    { kanji: "犬", reading: "いぬ", meaning: "人気のペット動物", example: "●の散歩をする。" },
+    { kanji: "花", reading: "はな", meaning: "きれいに咲くもの", example: "庭に赤い●が咲いた。" },
+    { kanji: "空", reading: "そら", meaning: "青く広がる上の世界", example: "青い●に雲がある。" },
+    { kanji: "音", reading: "おと", meaning: "耳で聞こえるもの", example: "ピアノの●が聞こえる。" },
+    { kanji: "田", reading: "た", meaning: "お米を育てる土地", example: "秋になると●んぼが金色になる。" },
+    { kanji: "石", reading: "いし", meaning: "硬い鉱物", example: "川原で丸い●を拾った。" },
+    { kanji: "林", reading: "はやし", meaning: "木が集まった場所", example: "●の中を散歩する。" },
+    { kanji: "森", reading: "もり", meaning: "たくさんの木がある場所", example: "深い●に動物がすんでいる。" },
+    { kanji: "雨", reading: "あめ", meaning: "空から降る水", example: "●が降ってきたので傘をさした。" },
+    { kanji: "竹", reading: "たけ", meaning: "まっすぐ伸びる植物", example: "●やぶの中でパンダが食事している。" },
+  ],
+  2: [
+    { kanji: "春", reading: "はる", meaning: "桜が咲くあたたかい季節", example: "●になると桜が咲く。" },
+    { kanji: "夏", reading: "なつ", meaning: "暑い季節", example: "●休みに海へ行った。" },
+    { kanji: "秋", reading: "あき", meaning: "紅葉が美しい季節", example: "●になると葉が赤く染まる。" },
+    { kanji: "冬", reading: "ふゆ", meaning: "雪が降る寒い季節", example: "●は毎朝息が白くなる。" },
+    { kanji: "朝", reading: "あさ", meaning: "一日の始まりの時間", example: "●早く起きてジョギングした。" },
+    { kanji: "昼", reading: "ひる", meaning: "真ん中あたりの時間帯", example: "●ごはんにラーメンを食べた。" },
+    { kanji: "夜", reading: "よる", meaning: "暗くなった時間帯", example: "●に星がきれいに見えた。" },
+    { kanji: "晴", reading: "は（れ）", meaning: "雲がなく天気がよい", example: "●れた日は外で遊ぼう。" },
+    { kanji: "雲", reading: "くも", meaning: "空に浮かぶ白いもの", example: "大きな●が空に広がった。" },
+    { kanji: "風", reading: "かぜ", meaning: "空気が流れること", example: "強い●で帽子が飛んだ。" },
+    { kanji: "雪", reading: "ゆき", meaning: "白くふわふわ降るもの", example: "●が積もって庭が真っ白になった。" },
+    { kanji: "光", reading: "ひかり", meaning: "明るくするもの", example: "太陽の●で部屋が明るい。" },
+    { kanji: "色", reading: "いろ", meaning: "赤・青・黄などのこと", example: "虹はたくさんの●でできている。" },
+    { kanji: "海", reading: "うみ", meaning: "広い塩水の場所", example: "●に飛び込んで泳いだ。" },
+    { kanji: "池", reading: "いけ", meaning: "小さな水のたまり場", example: "公園の●でカモが泳いでいる。" },
+    { kanji: "岩", reading: "いわ", meaning: "大きくて硬い石", example: "大きな●によじ登った。" },
+    { kanji: "谷", reading: "たに", meaning: "山と山の間の低い場所", example: "●川に沿って歩いた。" },
+    { kanji: "原", reading: "はら", meaning: "広く平らな土地", example: "草●を馬が走る。" },
+    { kanji: "道", reading: "みち", meaning: "歩いたり車が通る通路", example: "この●をまっすぐ行くと駅がある。" },
+    { kanji: "町", reading: "まち", meaning: "店や家が集まる場所", example: "にぎやかな●を歩いた。" },
+    { kanji: "村", reading: "むら", meaning: "田舎の小さな集落", example: "山の中の小さな●に住んでいる。" },
+    { kanji: "語", reading: "ご", meaning: "言葉・言語のこと", example: "英●の授業で発表した。" },
+    { kanji: "話", reading: "はなし", meaning: "会話・物語のこと", example: "おもしろい●を聞かせてもらった。" },
+    { kanji: "聞", reading: "き（く）", meaning: "音を耳で受け取る", example: "先生の●こえる声で名前を呼ばれた。" },
+    { kanji: "読", reading: "よ（む）", meaning: "文字を目で理解する", example: "図書館で本を●んだ。" },
+    { kanji: "書", reading: "か（く）", meaning: "文字をペンで記す", example: "日記を毎日●いている。" },
+    { kanji: "算", reading: "さん", meaning: "計算・数学のこと", example: "●数の問題を解いた。" },
+    { kanji: "数", reading: "かず", meaning: "数えること・数字", example: "●をかぞえながら並んだ。" },
+    { kanji: "図", reading: "ず", meaning: "絵や地図のこと", example: "地●を見て道を確認した。" },
+    { kanji: "工", reading: "こう", meaning: "ものを作ること", example: "図●の時間に木工をした。" },
+    { kanji: "作", reading: "つく（る）", meaning: "ものを製造・制作する", example: "粘土で動物を●った。" },
+    { kanji: "画", reading: "が", meaning: "絵・映像のこと", example: "美術館で絵●を鑑賞した。" },
+    { kanji: "親", reading: "おや", meaning: "お父さん・お母さん", example: "●に感謝の手紙を書いた。" },
+    { kanji: "友", reading: "とも", meaning: "仲の良い人・友達", example: "●達と公園で遊んだ。" },
+    { kanji: "兄", reading: "あに", meaning: "年上の男のきょうだい", example: "●は中学生でサッカーが得意だ。" },
+  ],
+  3: [
+    { kanji: "反", reading: "はん", meaning: "逆らう・反対のこと", example: "●対意見を言う。" },
+    { kanji: "表", reading: "ひょう・おもて", meaning: "外側・一覧のこと", example: "成績●を見て喜んだ。" },
+    { kanji: "期", reading: "き", meaning: "時間の区切り", example: "夏●休みが始まった。" },
+    { kanji: "究", reading: "きゅう", meaning: "調べ尽くすこと", example: "研●発表会で賞をとった。" },
+    { kanji: "区", reading: "く", meaning: "区域・区分のこと", example: "この●は静かな住宅地だ。" },
+    { kanji: "苦", reading: "く", meaning: "辛い・苦しいこと", example: "●手な野菜を頑張って食べた。" },
+    { kanji: "去", reading: "さ（る）", meaning: "離れて行くこと", example: "●年の夏は台風が多かった。" },
+    { kanji: "起", reading: "お（きる）", meaning: "立ち上がる・始まる", example: "朝六時に●きる。" },
+    { kanji: "急", reading: "きゅう", meaning: "速い・突然のこと", example: "●いで学校に向かった。" },
+    { kanji: "君", reading: "きみ", meaning: "あなた・呼びかけ", example: "●は本が好きだね。" },
+    { kanji: "係", reading: "かかり", meaning: "担当・つながり", example: "給食●を一週間やった。" },
+    { kanji: "薬", reading: "くすり", meaning: "病気や痛みを治すもの", example: "熱が出たので●を飲んだ。" },
+    { kanji: "荷", reading: "に", meaning: "運ぶ重さ・荷物", example: "重い●物を運ぶ。" },
+    { kanji: "号", reading: "ごう", meaning: "番号・記号のこと", example: "出席番●を呼ばれた。" },
+    { kanji: "根", reading: "ね", meaning: "植物の地下部分", example: "大根の●っこを引っこ抜いた。" },
+    { kanji: "祭", reading: "まつり", meaning: "お祭り・伝統行事", example: "夏●りで花火を見た。" },
+    { kanji: "使", reading: "つか（う）", meaning: "道具などを活用する", example: "はさみを●って紙を切った。" },
+    { kanji: "始", reading: "はじ（まる）", meaning: "スタートすること", example: "授業が●まる前に準備する。" },
+    { kanji: "指", reading: "ゆび", meaning: "手の先の細い部分", example: "●でピアノの鍵盤を押す。" },
+    { kanji: "歯", reading: "は", meaning: "口の中の硬いもの", example: "食後に●みがきをする。" },
+    { kanji: "詩", reading: "し", meaning: "言葉で書く文学作品", example: "春をテーマに●を書いた。" },
+    { kanji: "持", reading: "も（つ）", meaning: "手でつかむ・保つ", example: "バッグを両手で●つ。" },
+    { kanji: "事", reading: "こと", meaning: "できごと・物事", example: "大切な●を手帳に書く。" },
+    { kanji: "次", reading: "つぎ", meaning: "その後に来るもの", example: "●の駅で降りる。" },
+    { kanji: "主", reading: "しゅ・ぬし", meaning: "中心・持ち主のこと", example: "この店の●人公は料理が上手だ。" },
+    { kanji: "守", reading: "まも（る）", meaning: "護る・ルールを守る", example: "交通ルールを●る。" },
+    { kanji: "取", reading: "と（る）", meaning: "手に入れること", example: "りんごを木から●る。" },
+    { kanji: "受", reading: "う（ける）", meaning: "もらう・引き受ける", example: "プレゼントを●け取る。" },
+    { kanji: "想", reading: "そう", meaning: "考え・イメージのこと", example: "感●文を原稿用紙に書いた。" },
+    { kanji: "追", reading: "お（う）", meaning: "後を追いかけること", example: "ボールを●いかけた。" },
+    { kanji: "転", reading: "てん", meaning: "回る・場所が変わる", example: "自●車で学校に通う。" },
+    { kanji: "度", reading: "ど", meaning: "回数・温度などの単位", example: "今日の気温は三十●だ。" },
+    { kanji: "投", reading: "な（げる）", meaning: "物を投げること", example: "ピッチャーがボールを●げた。" },
+    { kanji: "島", reading: "しま", meaning: "海に囲まれた陸地", example: "南の●に旅行した。" },
+    { kanji: "登", reading: "のぼ（る）", meaning: "高い所へ上がること", example: "富士山に●った。" },
+  ],
+  4: [
+    { kanji: "愛", reading: "あい", meaning: "大切に思う深い気持ち", example: "ペットへの●情は深い。" },
+    { kanji: "案", reading: "あん", meaning: "計画・アイデアのこと", example: "新しい●を出し合った。" },
+    { kanji: "以", reading: "い", meaning: "〜より・〜でのこと", example: "十歳●上の子が参加できる。" },
+    { kanji: "位", reading: "い", meaning: "順位・場所のこと", example: "マラソンで三●になった。" },
+    { kanji: "囲", reading: "かこ（む）", meaning: "周りを取り囲むこと", example: "みんなでテーブルを●んだ。" },
+    { kanji: "印", reading: "いん", meaning: "しるし・スタンプのこと", example: "スタンプ●を押した。" },
+    { kanji: "英", reading: "えい", meaning: "すぐれた・英語のこと", example: "●語の本を読む。" },
+    { kanji: "栄", reading: "さか（える）", meaning: "繁栄・豊かになること", example: "昔この町は●えていた。" },
+    { kanji: "塩", reading: "しお", meaning: "料理に使う白い調味料", example: "スープに●を加える。" },
+    { kanji: "億", reading: "おく", meaning: "一億＝一万の一万倍", example: "百●円の宝くじが当たった。" },
+    { kanji: "加", reading: "くわ（える）", meaning: "付け加えること", example: "砂糖を少し●える。" },
+    { kanji: "果", reading: "か・くだもの", meaning: "結果・果物のこと", example: "練習の成●が出た。" },
+    { kanji: "貨", reading: "か", meaning: "お金・商品のこと", example: "外国の硬●を集めている。" },
+    { kanji: "課", reading: "か", meaning: "仕事の分野・授業", example: "宿題は国語の●題だ。" },
+    { kanji: "芽", reading: "め", meaning: "植物の新しい部分", example: "春になって球根から●が出た。" },
+    { kanji: "害", reading: "がい", meaning: "損害・被害のこと", example: "台風で農作物に被●が出た。" },
+    { kanji: "街", reading: "まち・がい", meaning: "店が並ぶにぎやかな道", example: "商店●でショッピングした。" },
+    { kanji: "覚", reading: "おぼ（える）", meaning: "記憶すること", example: "九九を全部●えた。" },
+    { kanji: "型", reading: "かた", meaning: "形・モデルのこと", example: "最新●のスマホを買った。" },
+    { kanji: "景", reading: "けい", meaning: "風景・眺めのこと", example: "山からの●色がすばらしい。" },
+    { kanji: "欠", reading: "か（ける）", meaning: "足りない・ひびが入る", example: "お皿が●けてしまった。" },
+    { kanji: "結", reading: "むす（ぶ）", meaning: "つなぐ・まとめること", example: "リボンを●んでプレゼントした。" },
+    { kanji: "建", reading: "た（てる）", meaning: "建物を作ること", example: "新しい図書館が●てられた。" },
+    { kanji: "健", reading: "けん", meaning: "体が丈夫なこと", example: "●康のために毎日歩く。" },
+    { kanji: "験", reading: "けん", meaning: "試験・経験のこと", example: "試●に向けて勉強する。" },
+    { kanji: "固", reading: "かた（い）", meaning: "硬くて動かないこと", example: "●いパンを水で柔らかくした。" },
+    { kanji: "功", reading: "こう", meaning: "成功・手柄のこと", example: "努力が実り成●した。" },
+    { kanji: "航", reading: "こう", meaning: "船や飛行機で進むこと", example: "飛行機で太平洋を横●した。" },
+    { kanji: "告", reading: "こく", meaning: "知らせること", example: "先生が大切なことを報●した。" },
+    { kanji: "差", reading: "さ", meaning: "違い・差分のこと", example: "二チームの点●は三点だった。" },
+    { kanji: "菜", reading: "な", meaning: "野菜・おかずのこと", example: "お弁当に野●を入れる。" },
+    { kanji: "最", reading: "さい", meaning: "いちばんのこと", example: "●高の景色を見た。" },
+    { kanji: "敗", reading: "やぶ（れる）", meaning: "負けること", example: "試合に●れたが全力を出した。" },
+    { kanji: "費", reading: "ひ", meaning: "使うお金・費用のこと", example: "旅行の交通●を計算した。" },
+    { kanji: "望", reading: "のぞ（む）", meaning: "願い・希望すること", example: "将来の夢を希●する。" },
+  ],
+  5: [
+    { kanji: "圧", reading: "あつ", meaning: "押さえる力のこと", example: "気●が下がると雨が降りやすい。" },
+    { kanji: "移", reading: "うつ（る）", meaning: "場所や状態が変わること", example: "新しい学校に転●した。" },
+    { kanji: "因", reading: "いん", meaning: "原因・理由のこと", example: "火事の原●を調べた。" },
+    { kanji: "永", reading: "えい", meaning: "ずっと続くこと", example: "●久に友達でいよう。" },
+    { kanji: "営", reading: "えい", meaning: "経営する・運営すること", example: "家族で食堂を●んでいる。" },
+    { kanji: "衛", reading: "えい", meaning: "守る・人工衛星のこと", example: "人工●星から地球を観測する。" },
+    { kanji: "益", reading: "えき", meaning: "利益・役に立つこと", example: "社会に●する仕事をしたい。" },
+    { kanji: "液", reading: "えき", meaning: "液体・汁のこと", example: "消毒●で手を清潔にした。" },
+    { kanji: "演", reading: "えん", meaning: "演じる・公演すること", example: "舞台で主役を●じた。" },
+    { kanji: "応", reading: "おう", meaning: "答える・対応すること", example: "緊急の事態に対●する。" },
+    { kanji: "恩", reading: "おん", meaning: "お世話・恩義のこと", example: "先生への●返しに手紙を書いた。" },
+    { kanji: "価", reading: "か", meaning: "値段・価値のこと", example: "この絵の評●は高い。" },
+    { kanji: "可", reading: "か", meaning: "できる・許すこと", example: "参加●能な人は手を挙げて。" },
+    { kanji: "快", reading: "かい", meaning: "気持ちいい・快適なこと", example: "●晴れの空の下で遊んだ。" },
+    { kanji: "解", reading: "と（く）", meaning: "解く・理解すること", example: "難しい問題を●いた。" },
+    { kanji: "格", reading: "かく", meaning: "品質・資格のこと", example: "試験に合●した。" },
+    { kanji: "確", reading: "かく", meaning: "確かめる・確実なこと", example: "答えを●認してから提出した。" },
+    { kanji: "額", reading: "がく", meaning: "金額・額縁のこと", example: "合計金●を計算する。" },
+    { kanji: "幹", reading: "かん", meaning: "木の幹・中心部分", example: "太い●のある大木に触れた。" },
+    { kanji: "慣", reading: "な（れる）", meaning: "慣れ親しむこと", example: "新しい生活に●れてきた。" },
+    { kanji: "基", reading: "き", meaning: "基本・土台のこと", example: "算数の●礎をしっかり学ぶ。" },
+    { kanji: "寄", reading: "よ（る）", meaning: "近づく・寄付すること", example: "帰りにコンビニに●った。" },
+    { kanji: "規", reading: "き", meaning: "ルール・規則のこと", example: "学校の●則を守る。" },
+    { kanji: "技", reading: "わざ", meaning: "技術・スキルのこと", example: "体操の●を練習した。" },
+    { kanji: "義", reading: "ぎ", meaning: "正しい道・意味のこと", example: "正●のために行動する。" },
+    { kanji: "逆", reading: "ぎゃく", meaning: "反対・逆向きのこと", example: "●方向に歩いてしまった。" },
+    { kanji: "久", reading: "ひさ（しい）", meaning: "長い時間がたつこと", example: "●しぶりに旧友に会った。" },
+    { kanji: "居", reading: "い（る）", meaning: "そこにいること", example: "家に●ると電話が鳴った。" },
+    { kanji: "許", reading: "ゆる（す）", meaning: "許可すること", example: "先生が外出を●してくれた。" },
+    { kanji: "境", reading: "さかい", meaning: "区切り・境界のこと", example: "県●を越えて旅した。" },
+    { kanji: "興", reading: "きょう", meaning: "おもしろさ・興味のこと", example: "科学に●味を持つ。" },
+    { kanji: "限", reading: "かぎ（る）", meaning: "限界・制限のこと", example: "時間に●りがあるので急ぐ。" },
+    { kanji: "護", reading: "ご", meaning: "守ること・保護のこと", example: "環境保●について学んだ。" },
+    { kanji: "効", reading: "こう", meaning: "効果・役に立つこと", example: "薬が●いて熱が下がった。" },
+    { kanji: "講", reading: "こう", meaning: "講義・話すこと", example: "専門家の●演を聴いた。" },
+  ],
+  6: [
+    { kanji: "異", reading: "こと（なる）", meaning: "違う・異なること", example: "二つの意見が●なる。" },
+    { kanji: "遺", reading: "い", meaning: "残された・遺産のこと", example: "世界文化●産を訪れた。" },
+    { kanji: "域", reading: "いき", meaning: "区域・範囲のこと", example: "この地●は雪が多い。" },
+    { kanji: "宇", reading: "う", meaning: "宇宙・広い空間のこと", example: "●宙飛行士に憧れる。" },
+    { kanji: "映", reading: "うつ（る）", meaning: "映像・映すこと", example: "スクリーンに映●を映した。" },
+    { kanji: "延", reading: "のば（す）", meaning: "延長すること", example: "雨で試合が●期された。" },
+    { kanji: "沿", reading: "そ（う）", meaning: "沿って進むこと", example: "川●いに自転車で走った。" },
+    { kanji: "我", reading: "わ", meaning: "自分自身のこと", example: "●慢して最後まで走った。" },
+    { kanji: "灰", reading: "はい", meaning: "燃えた後に残るもの", example: "火山●が空を覆った。" },
+    { kanji: "拡", reading: "かく", meaning: "広げること", example: "地図を●大して見た。" },
+    { kanji: "革", reading: "かく", meaning: "変えること・皮のこと", example: "社会を改●する運動が起きた。" },
+    { kanji: "閣", reading: "かく", meaning: "内閣・高い建物のこと", example: "新しい内●が発足した。" },
+    { kanji: "割", reading: "わ（る）", meaning: "分けること・割合", example: "ケーキを六●した。" },
+    { kanji: "干", reading: "ほ（す）", meaning: "乾かすこと", example: "洗濯物を外に●した。" },
+    { kanji: "巻", reading: "ま（く）", meaning: "巻くこと・冊のこと", example: "包帯を足首に●いた。" },
+    { kanji: "看", reading: "かん", meaning: "見守ること・看護のこと", example: "●護師が患者を助けた。" },
+    { kanji: "簡", reading: "かん", meaning: "簡単・シンプルなこと", example: "●単な問題から始めた。" },
+    { kanji: "危", reading: "あぶ（ない）", meaning: "危険な状態のこと", example: "●険なので近づかないで。" },
+    { kanji: "机", reading: "つくえ", meaning: "勉強や作業用の台", example: "●の上を片付けた。" },
+    { kanji: "揮", reading: "き", meaning: "振るう・指揮すること", example: "指●者がタクトを振った。" },
+    { kanji: "貴", reading: "たか（い）", meaning: "価値がとても高いこと", example: "●重な体験ができた。" },
+    { kanji: "疑", reading: "うたが（う）", meaning: "疑問に思うこと", example: "その話を●わしく思った。" },
+    { kanji: "吸", reading: "す（う）", meaning: "空気などを吸うこと", example: "深呼●して落ち着いた。" },
+    { kanji: "供", reading: "そな（える）", meaning: "提供すること・子供", example: "神様にお●えをした。" },
+    { kanji: "胸", reading: "むね", meaning: "体の前側・心のこと", example: "発表前は●がドキドキした。" },
+    { kanji: "郷", reading: "きょう", meaning: "故郷・ふるさとのこと", example: "故●の味を懐かしむ。" },
+    { kanji: "勤", reading: "つと（める）", meaning: "仕事をすること", example: "父は会社に●めている。" },
+    { kanji: "筋", reading: "すじ", meaning: "筋肉・道筋のこと", example: "●トレで体を鍛える。" },
+    { kanji: "系", reading: "けい", meaning: "つながり・系列のこと", example: "太陽●の惑星を調べた。" },
+    { kanji: "敬", reading: "うやま（う）", meaning: "尊敬すること", example: "お年寄りを●う気持ちを持つ。" },
+    { kanji: "警", reading: "けい", meaning: "警告・警察のこと", example: "●察官が事故を処理した。" },
+    { kanji: "劇", reading: "げき", meaning: "演劇・激しいこと", example: "学芸会で●を上演した。" },
+    { kanji: "激", reading: "はげ（しい）", meaning: "非常に強いこと", example: "●しい雨が降り続いた。" },
+    { kanji: "穴", reading: "あな", meaning: "くぼんだ空間のこと", example: "地面に深い●が開いていた。" },
+    { kanji: "絹", reading: "きぬ", meaning: "なめらかで高級な布", example: "●のスカーフを首に巻いた。" },
+  ]
+};
+
+// ===== localStorage =====
+const STORAGE_KEY = 'kanji_techo_v1';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { history: [], weakWords: {} }; }
+  catch { return { history: [], weakWords: {} }; }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+// ===== 状態 =====
+let selectedLevel = null;
+let currentQuestions = [];
+let currentIndex = 0;
+let correctCount = 0;
+let wrongList = [];
+let hasDrawn = false;
+let isSubmitting = false;
+let isWeakDrill = false;
+
+// ===== キャンバス =====
+function initCanvas() {
+  canvas = document.getElementById('draw-canvas');
+  const wrap = document.getElementById('canvas-wrap');
+  const w = wrap.clientWidth;
+  canvas.width = w;
+  canvas.height = w;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, w);
+  drawGuide(w);
+  ctx.strokeStyle = '#1a0f08';
+  ctx.lineWidth = Math.max(6, w / 28);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (!canvasInitialized) {
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('pointerdown', e => { e.preventDefault(); startDraw(e); });
+    canvas.addEventListener('pointermove', e => { e.preventDefault(); draw(e); });
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointercancel', endDraw);
+    canvas.addEventListener('pointerleave', endDraw);
+    canvasInitialized = true;
+  }
+}
+
+
+
+function drawGuide(w) {
+  const guide = document.getElementById('canvas-guide');
+  const h = w;
+  guide.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  guide.setAttribute('width', w);
+  guide.setAttribute('height', h);
+  const cx = w / 2, cy = h / 2;
+  const sc = '#e8ddd0';
+  guide.innerHTML = `
+    <line x1="${cx}" y1="10" x2="${cx}" y2="${h-10}" stroke="${sc}" stroke-width="1.5" stroke-dasharray="8,5"/>
+    <line x1="10" y1="${cy}" x2="${w-10}" y2="${cy}" stroke="${sc}" stroke-width="1.5" stroke-dasharray="8,5"/>
+    <line x1="10" y1="10" x2="${w-10}" y2="${h-10}" stroke="${sc}" stroke-width="1" stroke-dasharray="4,10"/>
+    <line x1="${w-10}" y1="10" x2="10" y2="${h-10}" stroke="${sc}" stroke-width="1" stroke-dasharray="4,10"/>
+    <rect x="8" y="8" width="${w-16}" height="${h-16}" fill="none" stroke="${sc}" stroke-width="2" rx="18"/>
+  `;
+}
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (canvas.width / rect.width),
+    y: (e.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+// ===== テキスト入力 =====
+function onInputChange() {
+  const val = document.getElementById('kanji-input').value.trim();
+  hasDrawn = val.length > 0;
+  document.getElementById('submit-btn').disabled = !hasDrawn;
+}
+
+function clearInput() {
+  document.getElementById('kanji-input').value = '';
+  hasDrawn = false;
+  document.getElementById('submit-btn').disabled = true;
+}
+
+// ===== レベル選択 =====
+function selectLevel(level) {
+  selectedLevel = level;
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.level) === level);
+  });
+  document.getElementById('start-btn').disabled = false;
+}
+
+// ===== クイズ開始 =====
+function startQuiz() {
+  isWeakDrill = false;
+  const all = KANJI_DATA[selectedLevel];
+  const shuffled = [...all].sort(() => Math.random() - 0.5);
+  currentQuestions = shuffled.slice(0, 10);
+  currentIndex = 0;
+  correctCount = 0;
+  wrongList = [];
+
+  document.getElementById('header-level-label').textContent = selectedLevel + '年生';
+  showScreen('quiz-screen');
+  showQuestion();
+}
+
+function startWeakDrill() {
+  const d = loadData();
+  const entries = Object.entries(d.weakWords || {});
+  if (entries.length === 0) return;
+  // 間違い回数が多い順に最大10問
+  entries.sort((a, b) => b[1].count - a[1].count);
+  const top = entries.slice(0, 10);
+  // 漢字データから該当オブジェクトを取得
+  const allKanji = Object.values(KANJI_DATA).flat();
+  currentQuestions = top.map(([kanji]) => allKanji.find(k => k.kanji === kanji)).filter(Boolean);
+  currentQuestions = currentQuestions.sort(() => Math.random() - 0.5);
+  isWeakDrill = true;
+  currentIndex = 0;
+  correctCount = 0;
+  wrongList = [];
+  document.getElementById('header-level-label').textContent = '🔥 苦手ドリル';
+  showScreen('quiz-screen');
+  showQuestion();
+}
+
+function maskKanji(text, kanji) {
+  // 答えの漢字を●に置換（1文字ずつ対応）
+  return text.split('').map(ch => {
+    if (ch === kanji) return '<span class="masked">●</span>';
+    return ch;
+  }).join('');
+}
+
+function showQuestion() {
+  const q = currentQuestions[currentIndex];
+  document.getElementById('question-reading').textContent = q.reading;
+  // meaning 中の答え漢字をマスク
+  document.getElementById('question-meaning').innerHTML = maskKanji(q.meaning, q.kanji);
+  document.getElementById('progress-text').textContent = (currentIndex + 1) + ' / 10';
+  document.getElementById('progress-bar').style.width = ((currentIndex + 1) / 10 * 100) + '%';
+
+  // 例文表示（答えをマスク）
+  if (q.example) {
+    document.getElementById('question-example').style.display = 'block';
+    document.getElementById('question-example-text').innerHTML = maskKanji(q.example, q.kanji);
+  } else {
+    document.getElementById('question-example').style.display = 'none';
+  }
+
+  clearInput();
+  hasDrawn = false;
+  isSubmitting = false;
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('loading-indicator').style.display = 'none';
+  setTimeout(() => { const inp = document.getElementById('kanji-input'); if(inp) inp.focus(); }, 100);
+}
+
+// ===== 答え送信 =====
+function submitAnswer() {
+  if (!hasDrawn || isSubmitting) return;
+  isSubmitting = true;
+  document.getElementById('submit-btn').disabled = true;
+
+  const inputText = document.getElementById('kanji-input').value.trim();
+  const q = currentQuestions[currentIndex];
+  const correct = inputText === q.kanji;
+  showResult({
+    correct,
+    recognized: inputText,
+    comment: correct ? 'せいかい！よくできました！' : `「${q.kanji}」をよく見て練習しよう！`
+  });
+}
+
+function showResult(result) {
+  const q = currentQuestions[currentIndex];
+
+  const overlay = document.getElementById('result-overlay');
+  const icon = document.getElementById('result-icon');
+  const label = document.getElementById('result-label');
+  const detail = document.getElementById('result-detail');
+  const answer = document.getElementById('result-answer');
+
+  const d = loadData();
+  if (result.correct) {
+    correctCount++;
+    icon.textContent = '🎉';
+    label.textContent = 'せいかい！';
+    label.className = 'result-label correct';
+    detail.textContent = result.comment || 'よくできました！';
+    // 苦手から1回分減らす
+    if (d.weakWords[q.kanji]) {
+      d.weakWords[q.kanji].count--;
+      if (d.weakWords[q.kanji].count <= 0) delete d.weakWords[q.kanji];
+      saveData(d);
+    }
+  } else {
+    wrongList.push(q);
+    icon.textContent = '😢';
+    label.textContent = 'もう少し！';
+    label.className = 'result-label wrong';
+    const validRecognized = result.recognized && result.recognized !== '?';
+    detail.textContent = validRecognized
+      ? `書いた文字:「${result.recognized}」 / ${result.comment || ''}`
+      : result.comment || 'もう一度練習してみよう';
+    // 苦手に追加
+    if (!d.weakWords[q.kanji]) d.weakWords[q.kanji] = { reading: q.reading, count: 0 };
+    d.weakWords[q.kanji].count++;
+    saveData(d);
+  }
+  answer.textContent = '正解: ' + q.kanji;
+
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = currentIndex < 9 ? 'つぎへ →' : '結果をみる';
+  overlay.classList.add('show');
+
+}
+
+function nextQuestion() {
+  document.getElementById('result-overlay').classList.remove('show');
+  currentIndex++;
+  if (currentIndex >= 10) {
+    showFinalResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showFinalResult() {
+  const total = currentQuestions.length;
+  showScreen('result-screen');
+  document.getElementById('score-num').textContent = correctCount;
+  document.getElementById('correct-count').textContent = correctCount;
+  document.getElementById('wrong-count').textContent = total - correctCount;
+
+  const pct = correctCount / total;
+  let icon = '🏆', title = 'すばらしい！';
+  if (pct < 0.5) { icon = '📚'; title = 'もっと練習しよう！'; }
+  else if (pct < 0.7) { icon = '💪'; title = 'よくがんばった！'; }
+  else if (pct < 0.9) { icon = '⭐'; title = 'なかなかいい！'; }
+  document.getElementById('final-icon').textContent = icon;
+  document.getElementById('final-title').textContent = title;
+
+  const wrongSection = document.getElementById('wrong-list-section');
+  const wrongListEl = document.getElementById('wrong-list');
+  if (wrongList.length > 0) {
+    wrongSection.style.display = 'block';
+    wrongListEl.innerHTML = wrongList.map(q =>
+      `<div class="wrong-item">
+        <span>${q.kanji}</span>
+        <span class="wrong-item-reading">${q.reading}</span>
+      </div>`
+    ).join('');
+  } else {
+    wrongSection.style.display = 'none';
+  }
+
+  // 通常ドリルのみ履歴保存
+  if (!isWeakDrill) {
+    const d = loadData();
+    d.history = d.history || [];
+    d.history.unshift({
+      date: new Date().toLocaleDateString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+      level: selectedLevel,
+      score: correctCount,
+      total
+    });
+    if (d.history.length > 20) d.history = d.history.slice(0, 20);
+    saveData(d);
+  }
+
+  // 苦手ドリルボタン更新
+  const d2 = loadData();
+  const wc = Object.keys(d2.weakWords || {}).length;
+  const rwb = document.getElementById('result-weak-btn');
+  if (wc === 0) {
+    rwb.classList.add('disabled');
+    rwb.onclick = null;
+  } else {
+    rwb.classList.remove('disabled');
+    rwb.onclick = startWeakDrill;
+  }
+  updateHomeButtons();
+}
+
+function retryQuiz() {
+  if (isWeakDrill) { startWeakDrill(); }
+  else { startQuiz(); }
+}
+function goHome() { showScreen('start-screen'); updateHomeButtons(); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== ホームボタン更新 =====
+function updateHomeButtons() {
+  const d = loadData();
+  const wc = Object.keys(d.weakWords || {}).length;
+  const hwb = document.getElementById('home-weak-btn');
+  const hws = document.getElementById('home-weak-sub');
+  if (wc === 0) {
+    hwb.classList.add('disabled');
+    hwb.onclick = null;
+    hws.textContent = '苦手漢字がまだありません';
+  } else {
+    hwb.classList.remove('disabled');
+    hwb.onclick = startWeakDrill;
+    hws.textContent = Math.min(wc, 10) + '問';
+  }
+  const hss = document.getElementById('home-stats-sub');
+  hss.textContent = d.history && d.history.length > 0 ? d.history.length + '件の記録' : 'まだありません';
+}
+
+// ===== 記録画面レンダリング =====
+function renderStats() {
+  const d = loadData();
+  const hist = d.history || [];
+  const weak = d.weakWords || {};
+
+  // サマリー
+  const totalDrills = hist.length;
+  const totalCorrect = hist.reduce((s, h) => s + h.score, 0);
+  const totalQ = hist.reduce((s, h) => s + h.total, 0);
+  document.getElementById('stat-total').textContent = totalDrills;
+  document.getElementById('stat-correct').textContent = totalCorrect;
+  document.getElementById('stat-rate').textContent = totalQ > 0 ? Math.round(totalCorrect / totalQ * 100) + '%' : '0%';
+
+  // 苦手リスト
+  const weakEntries = Object.entries(weak).sort((a, b) => b[1].count - a[1].count);
+  const grid = document.getElementById('stats-weak-grid');
+  const empty = document.getElementById('stats-weak-empty');
+  const drillBtn = document.getElementById('stats-weak-drill-btn');
+  if (weakEntries.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    drillBtn.classList.add('disabled');
+    drillBtn.onclick = null;
+  } else {
+    empty.style.display = 'none';
+    grid.innerHTML = weakEntries.map(([kanji, info]) =>
+      `<div class="weak-chip">
+        <span class="weak-chip-kanji">${kanji}</span>
+        <span class="weak-chip-reading">${info.reading}</span>
+        <span class="weak-chip-count">✕${info.count}</span>
+      </div>`
+    ).join('');
+    drillBtn.classList.remove('disabled');
+    drillBtn.onclick = startWeakDrill;
+  }
+
+  // 履歴
+  const histList = document.getElementById('stats-history-list');
+  if (hist.length === 0) {
+    histList.innerHTML = '<div style="font-size:13px;color:#b5a08a">記録がありません</div>';
+  } else {
+    histList.innerHTML = hist.map(h => `
+      <div class="history-item">
+        <span class="history-lv">${h.level}年生</span>
+        <span class="history-date">${h.date}</span>
+        <span class="history-score">${h.score}/${h.total}</span>
+      </div>`).join('');
+  }
+}
+
+function clearAllStats() {
+  localStorage.removeItem(STORAGE_KEY);
+  renderStats();
+  updateHomeButtons();
+}
+
+// 起動時に更新
+updateHomeButtons();
+</script>
+</body>
+</html>
