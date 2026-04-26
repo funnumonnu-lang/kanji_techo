@@ -236,7 +236,7 @@
       transition: opacity 0.4s ease;
       font-family: 'Sawarabi Mincho', 'Zen Kurenaido', serif;
       font-weight: 400;
-      font-size: min(58vw, 58vh);
+      font-size: min(45vw, 45vh);
       color: rgba(200, 30, 30, 0.28);
       line-height: 1;
       user-select: none;
@@ -1262,7 +1262,10 @@ async function submitAnswer() {
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 150,
